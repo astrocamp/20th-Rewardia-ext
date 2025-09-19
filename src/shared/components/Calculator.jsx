@@ -67,8 +67,8 @@ function Calculator({ isVisible, onClose }) {
       setLoading(true);
       console.log('💳 [試算] 取得卡片列表:', bankName);
 
-      // 使用與 LoginPage.jsx 完全相同的邏輯
-      const response = await fetch(`https://rewardia.net/api/banks/${encodeURIComponent(bankName)}/cards`, {
+      // 使用新的 ext_api 端點
+      const response = await fetch(`https://rewardia.net/api/banks/${encodeURIComponent(bankName)}/cards/`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -119,7 +119,53 @@ function Calculator({ isVisible, onClose }) {
       setLoading(true);
       console.log('📋 [試算] 取得消費類別:', cardValue);
 
-      // 暫時使用預設類別（因為 CORS 限制）
+      // 使用真實的 API（GET 請求）
+      const response = await fetch(`https://rewardia.net/get-categories-by-card/?card_select=${encodeURIComponent(cardValue)}`, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+
+      if (response.ok) {
+        const html = await response.text();
+        // 解析 HTML 回應取得選項
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const options = doc.querySelectorAll('option');
+
+        const categories = Array.from(options)
+          .filter(option => option.value && option.value !== '')
+          .map(option => ({
+            value: option.value,
+            text: option.textContent.trim()
+          }));
+
+        setOptions(prev => ({
+          ...prev,
+          categories: categories,
+          scopes: []
+        }));
+        console.log('📋 [試算] 成功取得消費類別:', categories);
+      } else {
+        console.error('❌ [試算] 類別 API 失敗:', response.status);
+        // 使用預設類別作為備選
+        const defaultCategories = [
+          { value: 'online', text: '網路購物' },
+          { value: 'food', text: '餐飲' },
+          { value: 'gas', text: '加油' },
+          { value: 'transport', text: '交通' },
+          { value: 'other', text: '一般消費' }
+        ];
+        setOptions(prev => ({
+          ...prev,
+          categories: defaultCategories,
+          scopes: []
+        }));
+      }
+    } catch (error) {
+      console.error('💥 [試算] 取得類別列表失敗:', error);
+      // 使用預設類別作為備選
       const defaultCategories = [
         { value: 'online', text: '網路購物' },
         { value: 'food', text: '餐飲' },
@@ -127,15 +173,11 @@ function Calculator({ isVisible, onClose }) {
         { value: 'transport', text: '交通' },
         { value: 'other', text: '一般消費' }
       ];
-
       setOptions(prev => ({
         ...prev,
         categories: defaultCategories,
         scopes: []
       }));
-      console.log('📋 [試算] 使用預設消費類別');
-    } catch (error) {
-      console.error('💥 [試算] 取得類別列表失敗:', error);
     } finally {
       setLoading(false);
     }
@@ -146,37 +188,41 @@ function Calculator({ isVisible, onClose }) {
       setLoading(true);
       console.log('🎯 [試算] 取得消費種類:', categoryValue);
 
-      // 根據類別提供相應的範圍
-      const scopeMap = {
-        'online': [
-          { value: 'momo', text: 'momo購物網' },
-          { value: 'shopee', text: 'Shopee' },
-          { value: 'pchome', text: 'PChome' }
-        ],
-        'food': [
-          { value: 'foodpanda', text: 'foodpanda' },
-          { value: 'ubereats', text: 'Uber Eats' },
-          { value: 'restaurant', text: '一般餐廳' }
-        ],
-        'gas': [
-          { value: 'cpc', text: '中油' },
-          { value: 'formosa', text: '台塑' }
-        ],
-        'transport': [
-          { value: 'mrt', text: '捷運/公車' },
-          { value: 'taxi', text: '計程車' }
-        ],
-        'other': [
-          { value: 'general', text: '一般消費' }
-        ]
-      };
+      // 使用真實的 API（GET 請求）
+      const response = await fetch(`https://rewardia.net/get-scopes-by-category/?card_select=${encodeURIComponent(formData.card)}&category_select=${encodeURIComponent(categoryValue)}`, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
 
-      const scopes = scopeMap[categoryValue] || [{ value: 'general', text: '一般消費' }];
+      if (response.ok) {
+        const html = await response.text();
+        // 解析 HTML 回應取得選項
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const options = doc.querySelectorAll('option');
 
-      setOptions(prev => ({ ...prev, scopes }));
-      console.log('🎯 [試算] 使用預設消費種類:', scopes);
+        const scopes = Array.from(options)
+          .filter(option => option.value && option.value !== '')
+          .map(option => ({
+            value: option.value,
+            text: option.textContent.trim()
+          }));
+
+        setOptions(prev => ({ ...prev, scopes }));
+        console.log('🎯 [試算] 成功取得消費種類:', scopes);
+      } else {
+        console.error('❌ [試算] 種類 API 失敗:', response.status);
+        // 使用預設種類作為備選
+        const defaultScopes = [{ value: 'general', text: '一般消費' }];
+        setOptions(prev => ({ ...prev, scopes: defaultScopes }));
+      }
     } catch (error) {
       console.error('💥 [試算] 取得範圍列表失敗:', error);
+      // 使用預設種類作為備選
+      const defaultScopes = [{ value: 'general', text: '一般消費' }];
+      setOptions(prev => ({ ...prev, scopes: defaultScopes }));
     } finally {
       setLoading(false);
     }

@@ -208,7 +208,7 @@ function LoginPage() {
   const fetchCardsByBank = async (bankName) => {
     try {
       setFormLoading(true);
-      const response = await fetch(`https://rewardia.net/api/banks/${encodeURIComponent(bankName)}/cards`, {
+      const response = await fetch(`https://rewardia.net/api/banks/${encodeURIComponent(bankName)}/cards/`, {
         headers: {
           'Content-Type': 'application/json',
         },

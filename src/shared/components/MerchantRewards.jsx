@@ -1,111 +1,84 @@
 import React, { useState, useEffect } from 'react';
-import { getCurrentMerchant } from '../utils/merchant-detector';
 
 function MerchantRewards() {
-  const [merchant, setMerchant] = useState(null);
+  const [merchant, setMerchant] = useState('');
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // 商家名稱對應 API 的對照表（參考原始程式碼）
-  const merchantApiMap = {
-    'momo購物網': 'momo購物',
-    'Shopee蝦皮購物': 'Shopee',
-    'PChome 24h購物': 'pchome',
-    'Yahoo購物中心': 'Yahoo購物中心',
-    'foodpanda': 'foodpanda',
-    'KKday': 'KKday',
-    'Klook': 'Klook',
-    '誠品': '誠品',
-    'Coupang': 'Coupang',
-    '全家便利商店': '全家',
-    '7-ELEVEN': '7-11',
-    '全聯福利中心': '全聯',
-    '好市多': '好市多',
-    '家樂福': '家樂福',
-    '星巴克': '星巴克',
-    '麥當勞': '麥當勞'
+  // 商家對應表
+  const merchantMap = {
+    momo: "momo購物",
+    pchome: "pchome",
+    eslite: "誠品",
+    coupang: "Coupang",
+    foodpanda: "foodpanda",
+    kkday: "KKday",
+    klook: "Klook",
+    ".tw": "國內",
   };
 
   useEffect(() => {
-    detectCurrentMerchantAndFetchRewards();
+    getMerchantCards();
   }, []);
 
-  const detectCurrentMerchantAndFetchRewards = async () => {
-    console.log('🔍 [商家回饋] 開始偵測商家並取得回饋資訊...');
+  // get_current_url 函數
+  async function getCurrentUrl() {
+    let queryOptions = { active: true, currentWindow: true };
+    const [tab] = await chrome.tabs.query(queryOptions);
+    return tab.url;
+  }
+
+  // get_rewards 函數
+  async function getRewards(merchant) {
+    const url = `https://rewardia.net/api/rewards/scope/${merchant}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+  }
+
+  // get_merchant_cards 函數邏輯（適配 React）
+  async function getMerchantCards() {
     setLoading(true);
-    setError(null);
 
     try {
-      // 偵測當前商家
-      const detectedMerchant = await getCurrentMerchant();
-      console.log('🏪 [商家回饋] 偵測到商家:', detectedMerchant);
-      setMerchant(detectedMerchant);
+      let curUrl = await getCurrentUrl();
+      let merchantKey = Object.keys(merchantMap).find((key) => {
+        return curUrl.includes(key);
+      });
 
-      // 取得 API 用的商家名稱
-      const apiMerchantName = merchantApiMap[detectedMerchant.name] || detectedMerchant.name;
-      console.log('📡 [商家回饋] 使用 API 商家名稱:', apiMerchantName);
-
-      // 如果是未知商家，使用「海外」作為預設
-      let finalMerchantName = apiMerchantName;
-      if (detectedMerchant.name === '未知商家' || detectedMerchant.confidence < 30) {
-        finalMerchantName = '海外';
-        console.log('🌍 [商家回饋] 使用預設「海外」分類');
+      let finalMerchant;
+      if (curUrl.includes(merchantKey)) {
+        finalMerchant = merchantMap[merchantKey];
+      } else {
+        finalMerchant = "海外";
       }
 
-      // 取得該商家的回饋資訊
-      await fetchRewardsForMerchant(finalMerchantName);
-
+      setMerchant(finalMerchant);
+      const cards = await getRewards(finalMerchant);
+      setRewards(cards);
     } catch (error) {
-      console.error('💥 [商家回饋] 偵測商家失敗:', error);
-      setError('無法偵測當前商家');
-      setMerchant({ name: '未知商家', category: '一般' });
+      console.error('載入商家回饋失敗:', error);
+      setMerchant('未知商家');
+      setRewards([]);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const fetchRewardsForMerchant = async (merchantName) => {
-    console.log(`💳 [商家回饋] 取得「${merchantName}」的回饋資訊...`);
-
-    try {
-      const response = await fetch(`https://rewardia.net/api/rewards/scope/${encodeURIComponent(merchantName)}`);
-
-      if (response.ok) {
-        const rewardsData = await response.json();
-        console.log('✅ [商家回饋] 成功取得回饋資料:', rewardsData);
-        setRewards(rewardsData);
-      } else {
-        console.warn('⚠️ [商家回饋] API 回應錯誤:', response.status);
-        // 如果失敗，嘗試使用「海外」作為備選
-        if (merchantName !== '海外') {
-          console.log('🔄 [商家回饋] 嘗試使用「海外」分類...');
-          await fetchRewardsForMerchant('海外');
-        } else {
-          setError('無法取得回饋資訊');
-          setRewards([]);
-        }
-      }
-    } catch (error) {
-      console.error('💥 [商家回饋] 取得回饋資料失敗:', error);
-      setError('載入回饋資訊時發生錯誤');
-      setRewards([]);
-    }
-  };
-
-  const formatRewardRate = (card) => {
-    if (card.min_rate && card.max_rate) {
-      return `${card.min_rate} - ${card.max_rate}% 回饋`;
-    } else if (card.min_rate == null) {
-      return `最高 ${card.max_rate}% 回饋`;
-    } else if (card.max_rate == null) {
-      return `最低 ${card.min_rate}% 回饋`;
+  // format_card_rate
+  const formatRewardRate = (reward) => {
+    if (reward.min_rate && reward.max_rate) {
+      return `${reward.min_rate} - ${reward.max_rate}% 回饋`;
+    } else if (reward.min_rate == null) {
+      return `最高 ${reward.max_rate}% 回饋`;
+    } else if (reward.max_rate == null) {
+      return `最低 ${reward.min_rate}% 回饋`;
     }
     return '回饋資訊待更新';
   };
 
   const handleRefresh = () => {
-    detectCurrentMerchantAndFetchRewards();
+    getMerchantCards();
   };
 
   if (loading) {
@@ -152,35 +125,10 @@ function MerchantRewards() {
           color: '#111827',
           fontFamily: '"Kulim Park", sans-serif'
         }}>
-          {merchant?.name || '商家'} 信用卡回饋
+          {merchant} 信用卡回饋
         </h1>
-        {merchant?.category && (
-          <div style={{
-            fontSize: '14px',
-            color: '#6b7280',
-            fontFamily: '"Kulim Park", sans-serif'
-          }}>
-            {merchant.category}
-          </div>
-        )}
       </div>
 
-      {/* 錯誤訊息 */}
-      {error && (
-        <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          borderRadius: '8px',
-          padding: '12px',
-          marginBottom: '20px',
-          color: '#dc2626',
-          fontSize: '14px',
-          textAlign: 'center',
-          fontFamily: '"Kulim Park", sans-serif'
-        }}>
-          {error}
-        </div>
-      )}
 
       {/* 回饋卡片列表 */}
       <div style={{ marginBottom: '20px' }}>
@@ -237,7 +185,7 @@ function MerchantRewards() {
             borderRadius: '8px',
             border: '1px solid #e5e7eb'
           }}>
-            {error ? '載入失敗' : '目前沒有相關回饋資訊'}
+目前沒有相關回饋資訊
           </div>
         )}
       </div>

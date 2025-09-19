@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { FaGear, FaHouse, FaGift, FaUser, FaCalculator } from 'react-icons/fa6'
+import homeIcon from '../shared/images/account/icon/home.svg';
+import giftIcon from '../shared/images/account/icon/gift.svg';
+import userIcon from '../shared/images/account/icon/user.svg';
+import calculatorIcon from '../shared/images/account/icon/calculator.svg';
 import LoginPage from '../shared/components/LoginPage'
 import MerchantRewards from '../shared/components/MerchantRewards'
 import Calculator from '../shared/components/Calculator'
@@ -27,7 +30,7 @@ export default function Popup() {
         padding: '0 16px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         background: '#1f2937',
         boxSizing: 'border-box'
       }}>
@@ -37,22 +40,6 @@ export default function Popup() {
           color: 'white',
           letterSpacing: '0.025em'
         }}>REWARDIA</div>
-        <button
-          style={{
-            padding: '8px',
-            borderRadius: '6px',
-            background: 'transparent',
-            border: 'none',
-            color: 'white',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s'
-          }}
-          aria-label="設定"
-          onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
-          onMouseOut={(e) => e.target.style.background = 'transparent'}
-        >
-          <FaGear />
-        </button>
       </header>
 
       {/* Main */}
@@ -110,7 +97,15 @@ export default function Popup() {
                   e.target.style.boxShadow = '0 2px 4px rgba(37, 99, 235, 0.2)';
                 }}
               >
-                <FaCalculator style={{ fontSize: '20px' }} />
+                <img
+                  src={calculatorIcon}
+                  alt="計算器"
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    filter: 'brightness(0) saturate(100%) invert(100%)'
+                  }}
+                />
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: '16px', fontWeight: '600' }}>優惠試算</div>
                   <div style={{ fontSize: '12px', opacity: 0.9 }}>計算信用卡回饋金額</div>
@@ -166,15 +161,23 @@ export default function Popup() {
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            transition: 'color 0.2s'
+            transition: 'color 0.2s',
+            outline: 'none',
+            WebkitTapHighlightColor: 'transparent'
           }}
           onClick={() => setActive('home')} aria-label="首頁"
         >
-          <div style={{
-            fontSize: '16px',
-            transform: active === 'home' ? 'scale(1.1)' : 'scale(1)',
-            transition: 'transform 0.2s'
-          }}><FaHouse /></div>
+          <img
+            src={homeIcon}
+            alt="首頁"
+            style={{
+              width: '16px',
+              height: '16px',
+              filter: active === 'home' ? 'brightness(0) saturate(100%) invert(28%) sepia(77%) saturate(4475%) hue-rotate(208deg)' : 'brightness(0) saturate(100%) invert(42%)',
+              transform: active === 'home' ? 'scale(1.1)' : 'scale(1)',
+              transition: 'transform 0.2s, filter 0.2s'
+            }}
+          />
           <span>首頁</span>
         </button>
         <button
@@ -189,15 +192,23 @@ export default function Popup() {
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            transition: 'color 0.2s'
+            transition: 'color 0.2s',
+            outline: 'none',
+            WebkitTapHighlightColor: 'transparent'
           }}
           onClick={() => setActive('rewards')} aria-label="商家回饋"
         >
-          <div style={{
-            fontSize: '16px',
-            transform: active === 'rewards' ? 'scale(1.1)' : 'scale(1)',
-            transition: 'transform 0.2s'
-          }}><FaGift /></div>
+          <img
+            src={giftIcon}
+            alt="商家回饋"
+            style={{
+              width: '16px',
+              height: '16px',
+              filter: active === 'rewards' ? 'brightness(0) saturate(100%) invert(28%) sepia(77%) saturate(4475%) hue-rotate(208deg)' : 'brightness(0) saturate(100%) invert(42%)',
+              transform: active === 'rewards' ? 'scale(1.1)' : 'scale(1)',
+              transition: 'transform 0.2s, filter 0.2s'
+            }}
+          />
           <span>商家回饋</span>
         </button>
         <button
@@ -212,15 +223,23 @@ export default function Popup() {
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            transition: 'color 0.2s'
+            transition: 'color 0.2s',
+            outline: 'none',
+            WebkitTapHighlightColor: 'transparent'
           }}
           onClick={() => setActive('account')} aria-label="帳號"
         >
-          <div style={{
-            fontSize: '16px',
-            transform: active === 'account' ? 'scale(1.1)' : 'scale(1)',
-            transition: 'transform 0.2s'
-          }}><FaUser /></div>
+          <img
+            src={userIcon}
+            alt="帳號"
+            style={{
+              width: '16px',
+              height: '16px',
+              filter: active === 'account' ? 'brightness(0) saturate(100%) invert(28%) sepia(77%) saturate(4475%) hue-rotate(208deg)' : 'brightness(0) saturate(100%) invert(42%)',
+              transform: active === 'account' ? 'scale(1.1)' : 'scale(1)',
+              transition: 'transform 0.2s, filter 0.2s'
+            }}
+          />
           <span>帳號</span>
         </button>
       </nav>
