@@ -1,0 +1,123 @@
+.rewardia_popup {
+  color: white;
+  min-width: 320px;
+  max-width: 320px;
+  height: 60px;
+  background: linear-gradient(135deg, #032885 0%, #13b8ff 100%);
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 999999;
+  border-radius: 16px;
+  font-family: "Kulim Park", sans-serif;
+  font-size: 20px;
+  padding: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+
+  transform: translateX(120%);
+  opacity: 0;
+  animation: slideInFromRight 0.5s ease-out forwards;
+}
+
+.rewardia_popup:hover {
+  background: linear-gradient(135deg, #24458d 0%, #74aed6 100%);
+  cursor: pointer;
+}
+
+.popup_left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.popup_logo {
+  width: 40px;
+  height: 40px;
+}
+
+.popup_logo img {
+  width: 100%;
+}
+
+.rewardia_popup:hover {
+  background: linear-gradient(135deg, #24458d 0%, #74aed6 100%);
+  cursor: pointer;
+}
+
+.popup_text {
+  font-size: 14px;
+  margin-left: 10px;
+}
+
+.popup_close_btn {
+  font-size: 12px;
+}
+
+/* 購物車顯示回饋相關 */
+
+.display_rewards {
+  font-size: 16px;
+  color: #24458d;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  /* Animation properties */
+  transform: translateY(20px);
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out forwards;
+
+  /* Subtle hover effect */
+  transition: all 0.3s ease;
+}
+
+.display_rewards img {
+  width: 18px;
+  height: 18px;
+  animation: pulse 2s infinite;
+}
+
+.display_rewards p {
+  padding: 0 5px;
+}
+
+.display_rewards span {
+  color: #13b8ff;
+}
+
+/* Keyframe animation */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}

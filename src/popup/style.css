@@ -1,0 +1,19 @@
+/* 基本重置 - 但不覆蓋現有樣式 */
+
+/* 確保 Popup 容器樣式 */
+#popup-root {
+  width: 360px;
+  height: 520px;
+  background: white;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* 確保基本樣式正確載入 */
+.popup-container {
+  width: 360px;
+  height: 520px;
+  background: white;
+  color: #111827;
+  display: flex;
+  flex-direction: column;
+}

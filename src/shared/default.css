@@ -1,0 +1,80 @@
+:root {
+  --primary_color: #111827;
+  --secondary_color: #2060b9;
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  font-family: "Kulim Park", sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Popup 容器樣式 */
+.popup-container {
+  width: 360px;
+  height: 520px;
+  background: white;
+  color: #111827;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.popup-main {
+  flex: 1;
+  overflow: auto;
+  background: white;
+}
+
+.header {
+  height: 60px;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--primary_color);
+  padding: 0 15px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+}
+
+.logo {
+  font-family: "Kulim Park", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.navbar {
+  box-sizing: border-box;
+  padding: 0 15px;
+  width: 100%;
+  height: 60px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  border-top: 1px solid #e5e7eb;
+  background: white;
+}
+
+.icon {
+  padding-top: 5px;
+  font-size: 20px;
+}
+
+.icon a {
+  color: var(--primary_color);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.navbar span {
+  font-family: "Kulim Park", sans-serif;
+  font-size: 12px;
+  padding-top: 5px;
+}

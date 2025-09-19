@@ -1,0 +1,563 @@
+import React, { useState, useEffect } from 'react';
+import toysIcon from '../images/account/toys_presents_icon.png';
+import { openLoginPage } from '../api/auth';
+import { startCookieMonitor } from '../utils/simple-cookie-monitor';
+
+function LoginPage() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // 檢查登入狀態 - 模仿原來的簡單邏輯
+  useEffect(() => {
+    checkLoginStatus();
+
+    // 監聽 cookie 變化（簡單版本）
+    const stopCookieMonitor = startCookieMonitor((cookieData) => {
+      if (cookieData.isLoggedOut) {
+        console.log('🚪 [LoginPage] Cookie 監聽偵測到登出');
+        handleLogout();
+      }
+    });
+
+    return stopCookieMonitor;
+  }, []);
+
+  const checkLoginStatus = async () => {
+    console.log('🔄 [LoginPage] 檢查登入狀態...');
+
+    try {
+      // 先檢查 localStorage 有沒有 token
+      const token = localStorage.getItem('authToken');
+      const username = localStorage.getItem('username');
+      const userID = localStorage.getItem('userID');
+
+      console.log('💾 [LoginPage] 本地資料:', {
+        hasToken: !!token,
+        hasUsername: !!username,
+        hasUserID: !!userID
+      });
+
+      // 如果沒有 token，嘗試從 API 取得
+      if (!token) {
+        console.log('🔄 [LoginPage] 嘗試從 API 取得 token...');
+        await fetchTokenFromAPI();
+
+        // 重新檢查
+        const newToken = localStorage.getItem('authToken');
+        const newUsername = localStorage.getItem('username');
+        const newUserID = localStorage.getItem('userID');
+
+        if (newToken && newUsername) {
+          console.log('✅ [LoginPage] 成功取得 token');
+          const userCards = await getUserCards(newToken, newUserID);
+          setUser({
+            isLoggedIn: true,
+            userId: newUserID,
+            userName: newUsername,
+            token: newToken,
+            userCards: userCards
+          });
+        } else {
+          console.log('❌ [LoginPage] 未登入');
+          setUser(null);
+        }
+      } else {
+        // 有 token，直接設定登入狀態並取得卡片
+        console.log('✅ [LoginPage] 找到本地 token');
+        const userCards = await getUserCards(token, userID);
+        setUser({
+          isLoggedIn: true,
+          userId: userID,
+          userName: username,
+          token: token,
+          userCards: userCards
+        });
+      }
+
+    } catch (error) {
+      console.error('💥 [LoginPage] 檢查失敗:', error);
+      setUser(null);
+    }
+  };
+
+  // 取得用戶卡片（參考 Chrome extension 的邏輯）
+  const getUserCards = async (token, userID) => {
+    try {
+      const response = await fetch(`https://rewardia.net/api/users/${userID}/cards/`, {
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const cards = await response.json();
+        console.log('💳 [LoginPage] 成功取得用戶卡片:', cards);
+        return cards;
+      } else {
+        console.warn('⚠️ [LoginPage] 取得卡片失敗:', response.status);
+        return [];
+      }
+    } catch (error) {
+      console.error('💥 [LoginPage] 取得卡片錯誤:', error);
+      return [];
+    }
+  };
+
+  const fetchTokenFromAPI = async () => {
+    try {
+      const response = await fetch('https://rewardia.net/users/api/get_token', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🎫 [LoginPage] API 回應:', data);
+
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('username', data.username);
+          localStorage.setItem('userID', data.user_id);
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ [LoginPage] API 請求失敗:', error);
+    }
+  };
+
+  const handleLoginClick = () => {
+    console.log('🔗 [LoginPage] 使用者點擊登入按鈕');
+    openLoginPage();
+
+    // 簡單的定期檢查（每3秒檢查一次）
+    const checkInterval = setInterval(() => {
+      console.log('🔄 [LoginPage] 定期檢查登入狀態...');
+      checkLoginStatus();
+
+      // 如果檢查到已登入，停止檢查
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        clearInterval(checkInterval);
+      }
+    }, 3000);
+
+    // 30秒後停止檢查
+    setTimeout(() => {
+      clearInterval(checkInterval);
+    }, 30000);
+  };
+
+  const handleLogout = () => {
+    console.log('🚪 [LoginPage] 使用者點擊登出');
+
+    // 清除本地資料
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userID');
+
+    // 更新狀態
+    setUser(null);
+
+    console.log('✅ [LoginPage] 登出完成');
+  };
+
+  const handleRefresh = () => {
+    console.log('🔄 [LoginPage] 使用者點擊重新整理');
+    checkLoginStatus();
+  };
+
+  // 處理新增卡片（簡單版本 - 打開 Rewardia 網站的新增頁面）
+  const handleAddCard = () => {
+    console.log('➕ [LoginPage] 使用者點擊新增卡片');
+
+    // 直接開啟 Rewardia 網站的新增卡片頁面
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      chrome.tabs.create({
+        url: 'https://rewardia.net/users/cards/new/'
+      });
+    } else {
+      window.open('https://rewardia.net/users/cards/new/', '_blank');
+    }
+
+    // 開啟頁面後，開始定期檢查是否有新增卡片
+    const checkInterval = setInterval(() => {
+      console.log('🔄 [LoginPage] 檢查是否有新增卡片...');
+      checkLoginStatus();
+    }, 3000);
+
+    // 30秒後停止檢查
+    setTimeout(() => {
+      clearInterval(checkInterval);
+    }, 30000);
+  };
+
+  // 處理刪除卡片（參考 Chrome extension 的邏輯）
+  const handleDeleteCard = async (cardId) => {
+    console.log('🗑️ [LoginPage] 使用者點擊刪除卡片:', cardId);
+
+    if (!user?.token) {
+      console.error('❌ [LoginPage] 沒有認證 token');
+      return;
+    }
+
+    const confirmDelete = window.confirm('確定要刪除這張卡片嗎？');
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://rewardia.net/api/users/delete_card/${cardId}/`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Token ${user.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        console.log('✅ [LoginPage] 成功刪除卡片');
+        // 重新載入卡片列表
+        checkLoginStatus();
+      } else {
+        console.error('❌ [LoginPage] 刪除卡片失敗:', response.status);
+        alert('刪除卡片失敗，請稍後再試');
+      }
+    } catch (error) {
+      console.error('💥 [LoginPage] 刪除卡片錯誤:', error);
+      alert('刪除卡片時發生錯誤');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="account_content" style={{
+        fontFamily: '"Kulim Park", sans-serif',
+        padding: '20px',
+        maxWidth: '400px',
+        margin: '0 auto'
+      }}>
+        <div className="login_view" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '300px',
+          textAlign: 'center'
+        }}>
+          <div className="login_img" style={{
+            marginBottom: '30px'
+          }}>
+            <img
+              src={toysIcon}
+              alt="禮物圖示"
+              className="login-icon"
+              style={{
+                width: '80px',
+                height: '80px',
+                marginBottom: '20px',
+                filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
+                animation: 'pulse 2s infinite'
+              }}
+            />
+            <h2 className="login-title" style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#6b7280',
+              margin: '0',
+              fontFamily: '"Kulim Park", sans-serif'
+            }}>
+              載入中...
+            </h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (user && user.isLoggedIn) {
+    // 已登入狀態 - 參考 Chrome extension 的卡片顯示
+    return (
+      <div className="account_content" style={{
+        fontFamily: '"Kulim Park", sans-serif',
+        padding: '20px',
+        maxWidth: '400px',
+        margin: '0 auto'
+      }}>
+        <div className="user_cards">
+          <h1 style={{
+            fontSize: '20px',
+            fontWeight: '700',
+            margin: '0 0 20px 0',
+            color: '#111827',
+            textAlign: 'center',
+            fontFamily: '"Kulim Park", sans-serif'
+          }}>
+            {user.userName} 的卡片
+          </h1>
+
+          {/* 卡片列表 */}
+          <div style={{ marginBottom: '20px' }}>
+            {user.userCards && user.userCards.length > 0 ? (
+              user.userCards.map((userCard) => (
+                <div
+                  key={userCard.card.id}
+                  className="card"
+                  style={{
+                    background: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    padding: '15px',
+                    marginBottom: '10px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+                    e.target.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <div className="card_text">
+                    <h2 style={{
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      margin: '0',
+                      color: '#111827',
+                      fontFamily: '"Kulim Park", sans-serif'
+                    }}>
+                      {userCard.card.name}
+                    </h2>
+                  </div>
+                  <div className="delete_card">
+                    <button
+                      className="delete_card_btn"
+                      onClick={() => handleDeleteCard(userCard.card.id)}
+                      style={{
+                        background: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        transition: 'all 0.2s ease',
+                        fontFamily: '"Kulim Park", sans-serif'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = '#dc2626';
+                        e.target.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = '#ef4444';
+                        e.target.style.transform = 'scale(1)';
+                      }}
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="no_cards" style={{
+                textAlign: 'center',
+                color: '#6b7280',
+                padding: '30px',
+                fontSize: '16px',
+                fontFamily: '"Kulim Park", sans-serif',
+                background: '#f9fafb',
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb'
+              }}>
+                尚未新增卡片
+              </div>
+            )}
+
+            {/* 新增卡片按鈕 */}
+            <div
+              className="card new_card"
+              style={{
+                background: '#f8fafc',
+                border: '2px dashed #2060b9',
+                borderRadius: '8px',
+                padding: '20px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                marginTop: '12px',
+                transition: 'all 0.2s ease'
+              }}
+              onClick={handleAddCard}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#f1f5f9';
+                e.target.style.borderColor = '#1d4ed8';
+                e.target.style.transform = 'scale(1.02)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = '#f8fafc';
+                e.target.style.borderColor = '#2060b9';
+                e.target.style.transform = 'scale(1)';
+              }}
+            >
+              <div className="card_text">
+                <h2 style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  margin: '0',
+                  color: '#2060b9',
+                  fontFamily: '"Kulim Park", sans-serif'
+                }}>
+                  + 新增卡片
+                </h2>
+              </div>
+            </div>
+          </div>
+
+          {/* 操作按鈕 */}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            flexDirection: 'column'
+          }}>
+            <button
+              className="btn login_btn"
+              onClick={handleRefresh}
+              style={{
+                backgroundColor: '#2060b9',
+                color: 'white',
+                border: 'none',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                fontFamily: '"Kulim Park", sans-serif'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#1d4ed8';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#2060b9';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              重新整理
+            </button>
+            <button
+              className="btn"
+              onClick={handleLogout}
+              style={{
+                backgroundColor: '#dc2626',
+                color: 'white',
+                border: 'none',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'all 0.2s ease',
+                fontFamily: '"Kulim Park", sans-serif'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#b91c1c';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#dc2626';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              登出
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 未登入狀態
+  return (
+    <div className="account_content" style={{
+      fontFamily: '"Kulim Park", sans-serif',
+      padding: '20px',
+      maxWidth: '400px',
+      margin: '0 auto'
+    }}>
+      <div className="login_view" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '300px',
+        textAlign: 'center'
+      }}>
+        <div className="login_img" style={{
+          marginBottom: '30px'
+        }}>
+          <img
+            src={toysIcon}
+            alt="禮物圖示"
+            className="login-icon"
+            style={{
+              width: '80px',
+              height: '80px',
+              marginBottom: '20px',
+              filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+            }}
+          />
+          <h2 className="login-title" style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            color: '#111827',
+            margin: '0',
+            fontFamily: '"Kulim Park", sans-serif'
+          }}>
+            歡迎使用REWARDIA
+          </h2>
+        </div>
+        <button
+          className="btn login_btn"
+          onClick={handleLoginClick}
+          style={{
+            backgroundColor: '#2060b9',
+            color: 'white',
+            border: 'none',
+            padding: '15px 30px',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            fontFamily: '"Kulim Park", sans-serif',
+            minWidth: '200px'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = '#1d4ed8';
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 4px 12px rgba(32, 96, 185, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = '#2060b9';
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = 'none';
+          }}
+        >
+          立即登入/註冊
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default LoginPage;
