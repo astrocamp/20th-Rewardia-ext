@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import homeIcon from '../shared/images/account/icon/home.svg';
 import giftIcon from '../shared/images/account/icon/gift.svg';
 import userIcon from '../shared/images/account/icon/user.svg';
@@ -10,7 +11,41 @@ import '../shared/login.css'
 
 export default function Popup() {
   const [active, setActive] = useState('account') // 預設顯示帳號頁面
-  const [calculatorVisible, setCalculatorVisible] = useState(false)
+  const [showCalculatorOverlay, setShowCalculatorOverlay] = useState(false)
+
+  // 動畫 variants
+  const overlayVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+    exit: { opacity: 0 }
+  }
+
+  const calculatorVariants = {
+    hidden: {
+      x: "100%",
+      opacity: 0,
+      scale: 0.95
+    },
+    visible: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+        opacity: { duration: 0.2 }
+      }
+    },
+    exit: {
+      x: "100%",
+      opacity: 0,
+      scale: 0.95,
+      transition: {
+        duration: 0.3
+      }
+    }
+  }
 
   return (
     <div style={{
@@ -32,7 +67,8 @@ export default function Popup() {
         alignItems: 'center',
         justifyContent: 'center',
         background: '#1f2937',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        position: 'relative'
       }}>
         <div style={{
           fontSize: '18px',
@@ -40,6 +76,37 @@ export default function Popup() {
           color: 'white',
           letterSpacing: '0.025em'
         }}>REWARDIA</div>
+
+        {/* 右上角浮動試算器按鈕 */}
+        <motion.button
+          onClick={() => setShowCalculatorOverlay(true)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          style={{
+            position: 'absolute',
+            right: '16px',
+            width: '36px',
+            height: '36px',
+            backgroundColor: '#2563eb',
+            border: 'none',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
+          }}
+        >
+          <img
+            src={calculatorIcon}
+            alt="試算器"
+            style={{
+              width: '20px',
+              height: '20px',
+              filter: 'brightness(0) saturate(100%) invert(100%)'
+            }}
+          />
+        </motion.button>
       </header>
 
       {/* Main */}
@@ -70,7 +137,7 @@ export default function Popup() {
             }}>
               {/* 優惠試算按鈕 */}
               <button
-                onClick={() => setCalculatorVisible(true)}
+                onClick={() => setShowCalculatorOverlay(true)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -244,11 +311,81 @@ export default function Popup() {
         </button>
       </nav>
 
-      {/* 試算側邊欄 */}
-      <Calculator
-        isVisible={calculatorVisible}
-        onClose={() => setCalculatorVisible(false)}
-      />
+      {/* 浮動試算器 Overlay */}
+      <AnimatePresence>
+        {showCalculatorOverlay && (
+          <>
+            {/* 背景遮罩 */}
+            <motion.div
+              variants={overlayVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={() => setShowCalculatorOverlay(false)}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(4px)',
+                zIndex: 1000
+              }}
+            />
+
+            {/* 試算器面板 */}
+            <motion.div
+              variants={calculatorVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              style={{
+                position: 'fixed',
+                top: '16px',
+                right: '16px',
+                width: '320px',
+                height: '480px',
+                backgroundColor: 'white',
+                borderRadius: '16px',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+                zIndex: 1001,
+                overflow: 'hidden'
+              }}
+            >
+              {/* 關閉按鈕 */}
+              <button
+                onClick={() => setShowCalculatorOverlay(false)}
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  width: '32px',
+                  height: '32px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '18px',
+                  color: '#666',
+                  zIndex: 1002
+                }}
+              >
+                ×
+              </button>
+
+              {/* 試算器內容 */}
+              <Calculator
+                isVisible={true}
+                onClose={() => setShowCalculatorOverlay(false)}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
