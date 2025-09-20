@@ -227,7 +227,7 @@ function MerchantRewards() {
       }}
     >
       {/* 標題區域 */}
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+      <div style={{ marginBottom: '20px', textAlign: 'left' }}>
         <h1 style={{
           fontSize: '20px',
           fontWeight: '700',

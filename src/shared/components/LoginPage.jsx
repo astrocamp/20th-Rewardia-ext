@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import toysIcon from '../images/account/toys_presents_icon.png';
+import logoutIcon from '../images/account/icon/logout.svg';
+import refreshIcon from '../images/account/icon/refresh.svg';
 import { openLoginPage } from '../api/auth';
 import { startCookieMonitor } from '../utils/simple-cookie-monitor';
+import { useToast } from '../contexts/ToastContext';
 
 function LoginPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   // 新增卡片表單狀態
   const [showAddCardForm, setShowAddCardForm] = useState(false);
@@ -14,6 +19,59 @@ function LoginPage() {
   const [banks, setBanks] = useState([]);
   const [availableCards, setAvailableCards] = useState([]);
   const [formLoading, setFormLoading] = useState(false);
+
+  // 下拉選單顯示狀態
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
+  const [showCardDropdown, setShowCardDropdown] = useState(false);
+
+  // 動畫variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    visible: (index) => ({
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        delay: index * 0.1,
+        duration: 0.4,
+        type: "spring",
+        stiffness: 300,
+        damping: 30
+      }
+    })
+  }
+
+  // 下拉動畫variants (來自Calculator)
+  const dropdownVariants = {
+    hidden: {
+      scaleY: 0,
+      opacity: 0,
+      transformOrigin: 'top'
+    },
+    visible: {
+      scaleY: 1,
+      opacity: 1,
+      transformOrigin: 'top',
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30
+      }
+    }
+  }
+
+  const optionVariants = {
+    hidden: { x: -10, opacity: 0 },
+    visible: (index) => ({
+      x: 0,
+      opacity: 1,
+      transition: {
+        delay: index * 0.05,
+        duration: 0.2
+      }
+    })
+  }
+
 
   // 檢查登入狀態 - 模仿原來的簡單邏輯
   useEffect(() => {
@@ -194,11 +252,11 @@ function LoginPage() {
         setBanks(banksData);
       } else {
         console.error('❌ [LoginPage] 取得銀行列表失敗:', response.status);
-        alert('無法載入銀行列表');
+        showToast('無法載入銀行列表', 'error');
       }
     } catch (error) {
       console.error('💥 [LoginPage] 取得銀行列表錯誤:', error);
-      alert('載入銀行列表時發生錯誤');
+      showToast('載入銀行列表時發生錯誤', 'error');
     } finally {
       setFormLoading(false);
     }
@@ -220,11 +278,11 @@ function LoginPage() {
         setAvailableCards(cardsData);
       } else {
         console.error('❌ [LoginPage] 取得卡片列表失敗:', response.status);
-        alert('無法載入該銀行的卡片');
+        showToast('無法載入該銀行的卡片', 'error');
       }
     } catch (error) {
       console.error('💥 [LoginPage] 取得卡片列表錯誤:', error);
-      alert('載入卡片列表時發生錯誤');
+      showToast('載入卡片列表時發生錯誤', 'error');
     } finally {
       setFormLoading(false);
     }
@@ -233,13 +291,13 @@ function LoginPage() {
   // 提交新增卡片
   const submitNewCard = async () => {
     if (!selectedCardId) {
-      alert('請選擇卡片');
+      showToast('請選擇卡片', 'error');
       return;
     }
 
     if (!user?.token) {
       console.error('❌ [LoginPage] 沒有認證資訊');
-      alert('請重新登入');
+      showToast('請重新登入', 'error');
       return;
     }
 
@@ -258,23 +316,25 @@ function LoginPage() {
 
       if (response.ok) {
         console.log('✅ [LoginPage] 成功新增卡片');
-        alert('卡片新增成功！');
+        showToast('卡片新增成功！', 'success');
         // 重置表單狀態
         setShowAddCardForm(false);
         setSelectedBank('');
         setSelectedCardId('');
         setBanks([]);
         setAvailableCards([]);
+        setShowBankDropdown(false);
+        setShowCardDropdown(false);
         // 重新載入用戶卡片
         checkLoginStatus();
       } else {
         const errorData = await response.json();
         console.error('❌ [LoginPage] 新增卡片失敗:', response.status, errorData);
-        alert('新增卡片失敗：' + (errorData.message || '請稍後再試'));
+        showToast('新增卡片失敗：' + (errorData.message || '請稍後再試'), 'error');
       }
     } catch (error) {
       console.error('💥 [LoginPage] 新增卡片錯誤:', error);
-      alert('新增卡片時發生錯誤');
+      showToast('新增卡片時發生錯誤', 'error');
     } finally {
       setFormLoading(false);
     }
@@ -284,12 +344,26 @@ function LoginPage() {
   const handleBankChange = async (bankName) => {
     setSelectedBank(bankName);
     setSelectedCardId(''); // 重置卡片選擇
+    setShowCardDropdown(false); // 關閉卡片下拉選單
     if (bankName) {
       await fetchCardsByBank(bankName);
     } else {
       setAvailableCards([]);
     }
   };
+
+  // 處理銀行選擇（下拉選單版本）
+  const handleBankSelect = (bankName) => {
+    handleBankChange(bankName);
+    setShowBankDropdown(false);
+  };
+
+  // 處理卡片選擇（下拉選單版本）
+  const handleCardSelect = (cardId, cardName) => {
+    setSelectedCardId(cardId);
+    setShowCardDropdown(false);
+  };
+
 
   // 處理新增卡片（插件內表單版本）
   const handleAddCard = async () => {
@@ -298,6 +372,8 @@ function LoginPage() {
     setSelectedBank('');
     setSelectedCardId('');
     setAvailableCards([]);
+    setShowBankDropdown(false);
+    setShowCardDropdown(false);
     await fetchBanks();
   };
 
@@ -326,25 +402,32 @@ function LoginPage() {
 
       if (response.ok) {
         console.log('✅ [LoginPage] 成功刪除卡片');
+        showToast('卡片刪除成功！', 'success');
         // 重新載入卡片列表
         checkLoginStatus();
       } else {
         console.error('❌ [LoginPage] 刪除卡片失敗:', response.status);
-        alert('刪除卡片失敗，請稍後再試');
+        showToast('刪除卡片失敗，請稍後再試', 'error');
       }
     } catch (error) {
       console.error('💥 [LoginPage] 刪除卡片錯誤:', error);
-      alert('刪除卡片時發生錯誤');
+      showToast('刪除卡片時發生錯誤', 'error');
     }
   };
 
   if (loading) {
     return (
-      <div className="account_content" style={{
+      <div style={{
         fontFamily: '"Kulim Park", sans-serif',
         padding: '16px',
         maxWidth: '400px',
-        margin: '0 auto'
+        margin: '0 auto',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxSizing: 'border-box'
       }}>
         <div className="login_view" style={{
           display: 'flex',
@@ -387,12 +470,17 @@ function LoginPage() {
   if (user && user.isLoggedIn) {
     // 已登入狀態 - 參考 Chrome extension 的卡片顯示
     return (
-      <div className="account_content" style={{
+      <div style={{
         fontFamily: '"Kulim Park", sans-serif',
         padding: '16px',
         maxWidth: '400px',
         margin: '0 auto',
-        justifyContent: 'flex-start'  // 覆蓋CSS中的center設定，避免內容被截掉
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        justifyContent: 'flex-start',
+        boxSizing: 'border-box'
       }}>
         {showAddCardForm ? (
           // 新增卡片表單 - 參考原始插件設計
@@ -412,6 +500,8 @@ function LoginPage() {
                   setSelectedBank('');
                   setSelectedCardId('');
                   setAvailableCards([]);
+                  setShowBankDropdown(false);
+                  setShowCardDropdown(false);
                 }}
                 style={{
                   background: 'none',
@@ -439,7 +529,7 @@ function LoginPage() {
             {/* 表單內容 */}
             <div className="form_content">
               {/* 發卡銀行下拉選單 */}
-              <div className="banks" style={{ marginBottom: '20px' }}>
+              <div className="banks" style={{ marginBottom: '20px', position: 'relative' }}>
                 <label style={{
                   display: 'block',
                   fontSize: '14px',
@@ -450,33 +540,94 @@ function LoginPage() {
                 }}>
                   <span style={{ color: '#ef4444' }}>* </span>發卡銀行
                 </label>
-                <select
-                  value={selectedBank}
-                  onChange={(e) => handleBankChange(e.target.value)}
+
+                {/* 自訂下拉選單觸發按鈕 */}
+                <motion.button
+                  type="button"
+                  onClick={() => !formLoading && setShowBankDropdown(!showBankDropdown)}
+                  whileHover={!formLoading ? { scale: 1.01 } : {}}
+                  whileTap={!formLoading ? { scale: 0.99 } : {}}
+                  disabled={formLoading}
                   style={{
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
                     borderRadius: '6px',
                     fontSize: '14px',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    fontFamily: '"Kulim Park", sans-serif',
-                    cursor: 'pointer'
+                    backgroundColor: formLoading ? '#f9fafb' : 'white',
+                    textAlign: 'left',
+                    cursor: formLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    opacity: formLoading ? 0.6 : 1,
+                    fontFamily: '"Kulim Park", sans-serif'
                   }}
-                  disabled={formLoading}
                 >
-                  <option value="">選擇發卡銀行</option>
-                  {banks.map((bank, index) => (
-                    <option key={bank.bank || index} value={bank.bank}>
-                      {bank.bank}
-                    </option>
-                  ))}
-                </select>
+                  <span style={{ color: selectedBank ? '#111827' : '#9ca3af' }}>
+                    {selectedBank || '選擇發卡銀行'}
+                  </span>
+                  {!formLoading && (
+                    <motion.span
+                      animate={{ rotate: showBankDropdown ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ fontSize: '12px' }}
+                    >
+                      ▼
+                    </motion.span>
+                  )}
+                </motion.button>
+
+                {/* 動畫下拉選單 */}
+                <AnimatePresence>
+                  {showBankDropdown && !formLoading && (
+                    <motion.div
+                      variants={dropdownVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        backgroundColor: 'white',
+                        border: '1px solid #d1d5db',
+                        borderTop: 'none',
+                        borderRadius: '0 0 6px 6px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        zIndex: 10,
+                        maxHeight: '200px',
+                        overflowY: 'auto'
+                      }}
+                    >
+                      {banks.map((bank, index) => (
+                        <motion.div
+                          key={bank.bank || index}
+                          custom={index}
+                          variants={optionVariants}
+                          initial="hidden"
+                          animate="visible"
+                          whileHover={{ backgroundColor: '#f3f4f6' }}
+                          onClick={() => handleBankSelect(bank.bank)}
+                          style={{
+                            padding: '12px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontFamily: '"Kulim Park", sans-serif',
+                            borderBottom: index < banks.length - 1 ? '1px solid #e5e7eb' : 'none'
+                          }}
+                        >
+                          {bank.bank}
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* 卡片下拉選單 */}
-              <div className="cards" style={{ marginBottom: '30px' }}>
+              <div className="cards" style={{ marginBottom: '30px', position: 'relative' }}>
                 <label style={{
                   display: 'block',
                   fontSize: '14px',
@@ -487,31 +638,95 @@ function LoginPage() {
                 }}>
                   <span style={{ color: '#ef4444' }}>* </span>卡片
                 </label>
-                <select
-                  value={selectedCardId}
-                  onChange={(e) => setSelectedCardId(e.target.value)}
+
+                {/* 自訂下拉選單觸發按鈕 */}
+                <motion.button
+                  type="button"
+                  onClick={() => selectedBank && !formLoading && setShowCardDropdown(!showCardDropdown)}
+                  whileHover={selectedBank && !formLoading ? { scale: 1.01 } : {}}
+                  whileTap={selectedBank && !formLoading ? { scale: 0.99 } : {}}
+                  disabled={!selectedBank || formLoading}
                   style={{
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
                     borderRadius: '6px',
                     fontSize: '14px',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    fontFamily: '"Kulim Park", sans-serif',
-                    cursor: 'pointer'
+                    backgroundColor: (selectedBank && !formLoading) ? 'white' : '#f9fafb',
+                    textAlign: 'left',
+                    cursor: (selectedBank && !formLoading) ? 'pointer' : 'not-allowed',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    opacity: (selectedBank && !formLoading) ? 1 : 0.6,
+                    fontFamily: '"Kulim Park", sans-serif'
                   }}
-                  disabled={!selectedBank || formLoading}
                 >
-                  <option value="">
-                    {!selectedBank ? '請先選擇發卡銀行' : '選擇卡片'}
-                  </option>
-                  {availableCards.map((card) => (
-                    <option key={card.id} value={card.id}>
-                      {card.name}
-                    </option>
-                  ))}
-                </select>
+                  <span style={{
+                    color: selectedCardId ? '#111827' : '#9ca3af'
+                  }}>
+                    {selectedCardId ?
+                      availableCards.find(c => c.id === selectedCardId)?.name || selectedCardId :
+                      (!selectedBank ? '請先選擇發卡銀行' : '選擇卡片')
+                    }
+                  </span>
+                  {selectedBank && !formLoading && (
+                    <motion.span
+                      animate={{ rotate: showCardDropdown ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ fontSize: '12px' }}
+                    >
+                      ▼
+                    </motion.span>
+                  )}
+                </motion.button>
+
+                {/* 動畫下拉選單 */}
+                <AnimatePresence>
+                  {showCardDropdown && selectedBank && !formLoading && (
+                    <motion.div
+                      variants={dropdownVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        backgroundColor: 'white',
+                        border: '1px solid #d1d5db',
+                        borderTop: 'none',
+                        borderRadius: '0 0 6px 6px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        zIndex: 10,
+                        maxHeight: '200px',
+                        overflowY: 'auto'
+                      }}
+                    >
+                      {availableCards.map((card, index) => (
+                        <motion.div
+                          key={card.id}
+                          custom={index}
+                          variants={optionVariants}
+                          initial="hidden"
+                          animate="visible"
+                          whileHover={{ backgroundColor: '#f3f4f6' }}
+                          onClick={() => handleCardSelect(card.id, card.name)}
+                          style={{
+                            padding: '12px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontFamily: '"Kulim Park", sans-serif',
+                            borderBottom: index < availableCards.length - 1 ? '1px solid #e5e7eb' : 'none'
+                          }}
+                        >
+                          {card.name}
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* 提交按鈕 */}
@@ -519,26 +734,35 @@ function LoginPage() {
                 onClick={submitNewCard}
                 disabled={!selectedCardId || formLoading}
                 style={{
-                  width: '100%',
-                  padding: '12px 20px',
-                  backgroundColor: selectedCardId && !formLoading ? '#2060b9' : '#9ca3af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px',
+                  backgroundColor: selectedCardId && !formLoading ? '#2563eb' : '#9ca3af',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '14px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
                   fontWeight: '600',
                   cursor: selectedCardId && !formLoading ? 'pointer' : 'not-allowed',
                   transition: 'all 0.2s ease',
+                  boxShadow: selectedCardId && !formLoading ? '0 2px 4px rgba(37, 99, 235, 0.2)' : 'none',
+                  width: '100%',
+                  justifyContent: 'center',
                   fontFamily: '"Kulim Park", sans-serif'
                 }}
                 onMouseEnter={(e) => {
                   if (selectedCardId && !formLoading) {
                     e.target.style.backgroundColor = '#1d4ed8';
+                    e.target.style.transform = 'translateY(-1px)';
+                    e.target.style.boxShadow = '0 4px 8px rgba(37, 99, 235, 0.3)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedCardId && !formLoading) {
-                    e.target.style.backgroundColor = '#2060b9';
+                    e.target.style.backgroundColor = '#2563eb';
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 2px 4px rgba(37, 99, 235, 0.2)';
                   }
                 }}
               >
@@ -549,88 +773,139 @@ function LoginPage() {
         ) : (
           // 原本的卡片列表
           <div className="user_cards">
-          <h1 style={{
-            fontSize: '20px',
-            fontWeight: '700',
-            margin: '0 0 20px 0',
-            color: '#111827',
-            textAlign: 'center',
-            fontFamily: '"Kulim Park", sans-serif'
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '20px'
           }}>
-            {user.userName} 的卡片
-          </h1>
+            <h1 style={{
+              fontSize: '20px',
+              fontWeight: '700',
+              margin: '0',
+              color: '#111827',
+              fontFamily: '"Kulim Park", sans-serif'
+            }}>
+              {user.userName} 的卡片
+            </h1>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.reload()}
+                style={{
+                  background: 'rgba(156, 163, 175, 0.1)',
+                  border: '1px solid rgba(156, 163, 175, 0.3)',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <img src={refreshIcon} alt="重新整理" style={{ width: '16px', height: '16px' }} />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                style={{
+                  background: 'rgba(156, 163, 175, 0.1)',
+                  border: '1px solid rgba(156, 163, 175, 0.3)',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <img src={logoutIcon} alt="登出" style={{ width: '16px', height: '16px' }} />
+              </motion.button>
+            </div>
+          </div>
 
           {/* 卡片列表 */}
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
             {user.userCards && user.userCards.length > 0 ? (
-              user.userCards.slice().reverse().map((userCard) => ( // reverse() 讓新卡片顯示在前面
-                <div
+              user.userCards.slice().reverse().map((userCard, index) => ( // reverse() 讓新卡片顯示在前面
+                <motion.div
                   key={userCard.card.id}
-                  className="card"
+                  initial={{ opacity: 0, x: -20, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 20, scale: 0.95 }}
+                  transition={{
+                    delay: index * 0.1,
+                    duration: 0.4,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30
+                  }}
+                  whileHover={{
+                    y: -4,
+                    scale: 1.02,
+                    background: "rgba(255, 255, 255, 0.25)",
+                    boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
+                    backdropFilter: "blur(15px)"
+                  }}
+                  whileTap={{ scale: 0.98 }}
                   style={{
-                    background: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    padding: '15px',
-                    marginBottom: '10px',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '16px',
+                    padding: '16px',
+                    marginBottom: '16px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+                    cursor: 'pointer',
+                    position: 'relative',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                    e.target.style.transform = 'translateY(0)';
+                    alignItems: 'center'
                   }}
                 >
-                  <div className="card_text">
+                  <div style={{
+                    flex: 1,
+                    marginRight: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center'
+                  }}>
                     <h2 style={{
                       fontSize: '16px',
                       fontWeight: '600',
                       margin: '0',
                       color: '#111827',
-                      fontFamily: '"Kulim Park", sans-serif'
+                      fontFamily: '"Kulim Park", sans-serif',
+                      lineHeight: '1.4',
+                      wordBreak: 'break-word'
                     }}>
                       {userCard.card.name}
                     </h2>
                   </div>
-                  <div className="delete_card">
-                    <button
-                      className="delete_card_btn"
-                      onClick={() => handleDeleteCard(userCard.card.id)}
-                      style={{
-                        background: '#ef4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 12px',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                        fontWeight: '500',
-                        transition: 'all 0.2s ease',
-                        fontFamily: '"Kulim Park", sans-serif',
-                        whiteSpace: 'nowrap', // 防止「刪除」兩字換行
-                        minWidth: '56px', // 固定寬度確保「刪除」兩字平排
-                        textAlign: 'center'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#dc2626';
-                        e.target.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = '#ef4444';
-                        e.target.style.transform = 'scale(1)';
-                      }}
-                    >
-                      刪除
-                    </button>
-                  </div>
-                </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleDeleteCard(userCard.card.id)}
+                    style={{
+                      background: 'rgba(249, 115, 22, 0.1)',
+                      color: '#ea580c',
+                      border: '1px solid rgba(249, 115, 22, 0.3)',
+                      borderRadius: '20px',
+                      padding: '6px 16px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontFamily: '"Kulim Park", sans-serif',
+                      whiteSpace: 'nowrap',
+                      position: 'relative',
+                      top: 0
+                    }}
+                  >
+                    刪除
+                  </motion.button>
+                </motion.div>
               ))
             ) : (
               <div className="no_cards" style={{
@@ -648,103 +923,42 @@ function LoginPage() {
             )}
 
             {/* 新增卡片按鈕 */}
-            <div
-              className="card new_card"
-              style={{
-                background: '#f8fafc',
-                border: '2px dashed #2060b9',
-                borderRadius: '8px',
-                padding: '20px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                marginTop: '12px',
-                transition: 'all 0.2s ease'
-              }}
-              onClick={handleAddCard}
-              onMouseEnter={(e) => {
-                e.target.style.background = '#f1f5f9';
-                e.target.style.borderColor = '#1d4ed8';
-                e.target.style.transform = 'scale(1.02)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = '#f8fafc';
-                e.target.style.borderColor = '#2060b9';
-                e.target.style.transform = 'scale(1)';
-              }}
-            >
-              <div className="card_text">
-                <h2 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  margin: '0',
-                  color: '#2060b9',
-                  fontFamily: '"Kulim Park", sans-serif'
-                }}>
-                  + 新增卡片
-                </h2>
-              </div>
-            </div>
-          </div>
-
-          {/* 操作按鈕 */}
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            flexDirection: 'column'
-          }}>
             <button
-              className="btn login_btn"
-              onClick={handleRefresh}
+              onClick={handleAddCard}
               style={{
-                backgroundColor: '#2060b9',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px',
+                backgroundColor: '#2563eb',
                 color: 'white',
                 border: 'none',
-                padding: '12px 20px',
                 borderRadius: '8px',
-                fontSize: '14px',
+                fontSize: '16px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                fontFamily: '"Kulim Park", sans-serif'
+                boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
+                width: '100%',
+                justifyContent: 'center',
+                fontFamily: '"Kulim Park", sans-serif',
+                marginTop: '12px'
               }}
               onMouseEnter={(e) => {
                 e.target.style.backgroundColor = '#1d4ed8';
                 e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 4px 8px rgba(37, 99, 235, 0.3)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#2060b9';
+                e.target.style.backgroundColor = '#2563eb';
                 e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 4px rgba(37, 99, 235, 0.2)';
               }}
             >
-              重新整理
-            </button>
-            <button
-              className="btn"
-              onClick={handleLogout}
-              style={{
-                backgroundColor: '#dc2626',
-                color: 'white',
-                border: 'none',
-                padding: '12px 20px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                transition: 'all 0.2s ease',
-                fontFamily: '"Kulim Park", sans-serif'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#b91c1c';
-                e.target.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#dc2626';
-                e.target.style.transform = 'translateY(0)';
-              }}
-            >
-              登出
+              + 新增卡片
             </button>
           </div>
+
           </div>
         )}
       </div>
@@ -753,11 +967,17 @@ function LoginPage() {
 
   // 未登入狀態
   return (
-    <div className="account_content" style={{
+    <div style={{
       fontFamily: '"Kulim Park", sans-serif',
       padding: '16px',
       maxWidth: '400px',
-      margin: '0 auto'
+      margin: '0 auto',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxSizing: 'border-box'
     }}>
       <div className="login_view" style={{
         display: 'flex',
