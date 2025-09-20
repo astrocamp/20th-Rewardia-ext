@@ -342,7 +342,7 @@ function LoginPage() {
     return (
       <div className="account_content" style={{
         fontFamily: '"Kulim Park", sans-serif',
-        padding: '80px 20px 20px 20px',
+        padding: '16px',
         maxWidth: '400px',
         margin: '0 auto'
       }}>
@@ -389,14 +389,15 @@ function LoginPage() {
     return (
       <div className="account_content" style={{
         fontFamily: '"Kulim Park", sans-serif',
-        padding: '100px 20px 80px 20px', // 增加更多頂部和底部空間
+        padding: '16px',
         maxWidth: '400px',
-        margin: '0 auto'
+        margin: '0 auto',
+        justifyContent: 'flex-start'  // 覆蓋CSS中的center設定，避免內容被截掉
       }}>
         {showAddCardForm ? (
           // 新增卡片表單 - 參考原始插件設計
           <div className="new_card_form" style={{
-            padding: '20px 0',
+            padding: '0',
             fontFamily: '"Kulim Park", sans-serif'
           }}>
             {/* 表單標題和返回按鈕 */}
@@ -560,7 +561,7 @@ function LoginPage() {
           </h1>
 
           {/* 卡片列表 */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginTop: '20px', marginBottom: '20px' }}>
             {user.userCards && user.userCards.length > 0 ? (
               user.userCards.slice().reverse().map((userCard) => ( // reverse() 讓新卡片顯示在前面
                 <div
@@ -635,7 +636,7 @@ function LoginPage() {
               <div className="no_cards" style={{
                 textAlign: 'center',
                 color: '#6b7280',
-                padding: '30px',
+                padding: '20px',
                 fontSize: '16px',
                 fontFamily: '"Kulim Park", sans-serif',
                 background: '#f9fafb',
@@ -653,7 +654,7 @@ function LoginPage() {
                 background: '#f8fafc',
                 border: '2px dashed #2060b9',
                 borderRadius: '8px',
-                padding: '80px 20px 20px 20px',
+                padding: '20px',
                 textAlign: 'center',
                 cursor: 'pointer',
                 marginTop: '12px',
@@ -754,7 +755,7 @@ function LoginPage() {
   return (
     <div className="account_content" style={{
       fontFamily: '"Kulim Park", sans-serif',
-      padding: '20px',
+      padding: '16px',
       maxWidth: '400px',
       margin: '0 auto'
     }}>

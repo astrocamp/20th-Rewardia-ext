@@ -17,7 +17,7 @@ export default defineConfig({
         },
         chunkFileNames: '[name].js',
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name === 'popup.html') {
+          if (assetInfo.name && assetInfo.name.includes('popup.html')) {
             return 'popup.html';
           }
           return '[name].[ext]';

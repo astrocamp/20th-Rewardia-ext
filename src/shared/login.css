@@ -7,9 +7,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;          /* 水平置中 */
-  justify-content: center;      /* 垂直置中 */
+  justify-content: center;      /* 垂直置中，已登入狀態會用inline style覆蓋 */
   box-sizing: border-box;
-  padding: 20px 15px;          /* 減少padding適應popup尺寸 */
+  padding: 16px !important;    /* 強制統一padding適應popup尺寸 */
   font-family: "Kulim Park", sans-serif;
 }
 
