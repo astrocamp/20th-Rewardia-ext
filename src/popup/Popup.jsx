@@ -80,21 +80,31 @@ export default function Popup() {
     setViewMode('grid')
   }
 
-  // 處理卡片回饋資訊 - 計算最高最低回饋率
+  // 處理卡片回饋資訊 - 計算最高最低回饋率並保留完整類別列表
   const processCardRewards = (rewards) => {
     if (!rewards || rewards.length === 0) {
-      return { maxRate: 0, minRate: 0, categories: 0, topCategory: '一般消費' }
+      return {
+        maxRate: 0,
+        minRate: 0,
+        categories: 0,
+        topCategory: '一般消費',
+        allCategories: []
+      }
     }
 
     const rates = rewards.map(reward => getRewardRate(reward.rate))
     const maxRate = Math.max(...rates)
     const minRate = Math.min(...rates)
 
+    // 取得獨特類別列表
+    const uniqueCategories = [...new Set(rewards.map(r => r.category))]
+
     return {
       maxRate: maxRate || 0,
       minRate: minRate || 0,
       categories: rewards.length,
-      topCategory: rewards[0]?.category || '一般消費'
+      topCategory: rewards[0]?.category || '一般消費',
+      allCategories: uniqueCategories
     }
   }
 
@@ -376,6 +386,23 @@ export default function Popup() {
             margin: '0 auto',
             fontFamily: '"Kulim Park", sans-serif'
           }}>
+            {/* 推薦標題 */}
+            <div style={{
+              marginBottom: '20px',
+              textAlign: 'left'
+            }}>
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: '700',
+                color: '#111827',
+                margin: '0',
+                fontFamily: '"Kulim Park", sans-serif',
+                lineHeight: '1.2'
+              }}>
+                信用卡回饋
+              </h2>
+            </div>
+
             {/* 搜尋區域切換按鈕 */}
             <motion.button
               onClick={() => setShowSearchArea(!showSearchArea)}
@@ -735,24 +762,6 @@ export default function Popup() {
               </div>
             )}
 
-            {/* 推薦標題 - 只在網格模式時顯示 */}
-            {displayCards.length > 0 && viewMode === 'grid' && (
-              <div style={{
-                marginBottom: '20px',
-                textAlign: 'left'
-              }}>
-                <h2 style={{
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: '#111827',
-                  margin: '0',
-                  fontFamily: '"Kulim Park", sans-serif',
-                  lineHeight: '1.2'
-                }}>
-                  信用卡回饋
-                </h2>
-              </div>
-            )}
 
             {/* 卡片展示區域 */}
             {displayCards.length > 0 && (
@@ -769,118 +778,130 @@ export default function Popup() {
                     style={{
                       backgroundColor: 'white',
                       border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      padding: '12px',
+                      borderRadius: '12px',
+                      padding: '16px',
                       display: 'flex',
-                      alignItems: 'flex-start',
+                      flexDirection: 'column',
                       gap: '12px',
-                      minHeight: '80px'
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
                     }}
                   >
-                    {/* 卡片圖片 */}
-                    <div style={{
-                      width: '60px',
-                      height: '38px',
-                      backgroundColor: '#f3f4f6',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden'
-                    }}>
-                      {card.image ? (
-                        <img
-                          src={card.image ? (card.image.includes('http') ? card.image : IMAGE_BASE_URL + card.image.split('/').pop()) : ''}
-                          alt={card.name}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
-                          }}
-                        />
-                      ) : (
+                    {/* 卡片頭部：圖片和名稱 */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{
+                        width: '48px',
+                        height: '30px',
+                        backgroundColor: '#f3f4f6',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden'
+                      }}>
+                        {card.image ? (
+                          <img
+                            src={card.image ? (card.image.includes('http') ? card.image : IMAGE_BASE_URL + card.image.split('/').pop()) : ''}
+                            alt={card.name}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '8px', color: '#9ca3af' }}>卡片</span>
+                        )}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{
+                          fontSize: '16px',
+                          fontWeight: '700',
+                          margin: '0 0 4px 0',
+                          color: '#1f2937',
+                          lineHeight: '1.3'
+                        }}>
+                          {card.name}
+                        </h3>
+                        <p style={{
+                          fontSize: '12px',
+                          color: '#6b7280',
+                          margin: '0',
+                          fontWeight: '500'
+                        }}>
+                          {card.bank}
+                        </p>
+                      </div>
+                    </div>
+
+
+                    {/* 類別標籤 */}
+                    {card.rewards && card.rewards.allCategories && card.rewards.allCategories.length > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '6px',
+                        marginTop: '4px'
+                      }}>
+                        {card.rewards.allCategories.slice(0, 4).map((category, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              fontSize: '11px',
+                              color: '#374151',
+                              backgroundColor: '#f3f4f6',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              fontWeight: '500'
+                            }}
+                          >
+                            {category}
+                          </span>
+                        ))}
+                        {card.rewards.allCategories.length > 4 && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              color: '#6b7280',
+                              backgroundColor: '#f9fafb',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              fontWeight: '400'
+                            }}
+                          >
+                            +{card.rewards.allCategories.length - 4} 更多
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 回饋資訊 */}
+                    {card.rewards && (card.rewards.maxRate || card.rewards.minRate) && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderTop: '1px solid #f3f4f6',
+                        paddingTop: '12px'
+                      }}>
                         <span style={{
-                          fontSize: '10px',
-                          color: '#9ca3af',
-                          textAlign: 'center'
+                          fontSize: '12px',
+                          color: '#6b7280',
+                          fontWeight: '500'
                         }}>
-                          卡片
+                          回饋率
                         </span>
-                      )}
-                    </div>
-
-                    {/* 卡片資訊 */}
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        margin: '0 0 4px 0',
-                        color: '#111827',
-                        lineHeight: '1.3'
-                      }}>
-                        {card.name}
-                      </h3>
-                      <p style={{
-                        fontSize: '12px',
-                        color: '#6b7280',
-                        margin: '0 0 8px 0'
-                      }}>
-                        {card.bank}
-                      </p>
-
-                      {/* 回饋資訊 */}
-                      {card.rewards && (
-                        <div style={{
-                          display: 'flex',
-                          gap: '12px',
-                          fontSize: '11px',
-                          color: '#374151'
+                        <span style={{
+                          fontSize: '14px',
+                          color: '#059669',
+                          fontWeight: '600'
                         }}>
-                          <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            backgroundColor: '#f3f4f6',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            minWidth: '45px'
-                          }}>
-                            <span style={{ fontWeight: '600', color: '#2563eb' }}>
-                              {card.rewards.maxRate}%
-                            </span>
-                            <span style={{ fontSize: '9px', color: '#6b7280' }}>最高</span>
-                          </div>
-                          <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            backgroundColor: '#f3f4f6',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            minWidth: '45px'
-                          }}>
-                            <span style={{ fontWeight: '600', color: '#059669' }}>
-                              {card.rewards.minRate}%
-                            </span>
-                            <span style={{ fontSize: '9px', color: '#6b7280' }}>最低</span>
-                          </div>
-                          <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            backgroundColor: '#f3f4f6',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            minWidth: '35px'
-                          }}>
-                            <span style={{ fontWeight: '600', color: '#7c3aed' }}>
-                              {card.rewards.categories}
-                            </span>
-                            <span style={{ fontSize: '9px', color: '#6b7280' }}>類別</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                          {card.rewards.minRate === card.rewards.maxRate
+                            ? `${card.rewards.maxRate}% 回饋`
+                            : `最低${card.rewards.minRate}% ~ 最高${card.rewards.maxRate}%`
+                          }
+                        </span>
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </div>
