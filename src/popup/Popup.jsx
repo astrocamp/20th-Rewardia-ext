@@ -4,6 +4,7 @@ import homeIcon from '../shared/images/account/icon/home.svg';
 import giftIcon from '../shared/images/account/icon/gift.svg';
 import userIcon from '../shared/images/account/icon/user.svg';
 import calculatorIcon from '../shared/images/account/icon/calculator.svg';
+import searchIcon from '../shared/images/account/icon/search.svg';
 import LoginPage from '../shared/components/LoginPage'
 import MerchantRewards from '../shared/components/MerchantRewards'
 import Calculator from '../shared/components/Calculator'
@@ -11,7 +12,7 @@ import { ToastProvider } from '../shared/contexts/ToastContext'
 import '../shared/login.css'
 
 export default function Popup() {
-  const [active, setActive] = useState('account') // 預設顯示帳號頁面
+  const [active, setActive] = useState('rewards') // 預設顯示商家回饋頁面
   const [showCalculatorOverlay, setShowCalculatorOverlay] = useState(false)
 
   // 圖片基礎路徑設定
@@ -378,31 +379,42 @@ export default function Popup() {
             {/* 搜尋區域切換按鈕 */}
             <motion.button
               onClick={() => setShowSearchArea(!showSearchArea)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               style={{
                 width: '100%',
-                padding: '16px',
-                backgroundColor: '#2563eb',
-                color: 'white',
-                border: 'none',
+                padding: '12px 16px',
+                backgroundColor: 'white',
+                color: '#374151',
+                border: '1px solid #d1d5db',
                 borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
+                fontSize: '14px',
+                fontWeight: '500',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                 marginBottom: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between'
               }}
             >
-              <span>卡片搜尋</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    mask: `url(${searchIcon}) no-repeat center / contain`,
+                    WebkitMask: `url(${searchIcon}) no-repeat center / contain`,
+                    backgroundColor: '#6b7280'
+                  }}
+                />
+                <span>卡片搜尋</span>
+              </div>
               <motion.span
                 animate={{ rotate: showSearchArea ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
-                style={{ fontSize: '14px' }}
+                style={{ fontSize: '14px', color: '#6b7280' }}
               >
                 ▼
               </motion.span>
@@ -726,26 +738,19 @@ export default function Popup() {
             {/* 推薦標題 - 只在網格模式時顯示 */}
             {displayCards.length > 0 && viewMode === 'grid' && (
               <div style={{
-                marginBottom: '16px',
-                textAlign: 'center'
+                marginBottom: '20px',
+                textAlign: 'left'
               }}>
                 <h2 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
+                  fontSize: '20px',
+                  fontWeight: '700',
                   color: '#111827',
-                  margin: '0 0 8px 0',
-                  fontFamily: '"Kulim Park", sans-serif'
+                  margin: '0',
+                  fontFamily: '"Kulim Park", sans-serif',
+                  lineHeight: '1.2'
                 }}>
-                  推薦卡片
+                  信用卡回饋
                 </h2>
-                <p style={{
-                  fontSize: '12px',
-                  color: '#6b7280',
-                  margin: 0,
-                  fontFamily: '"Kulim Park", sans-serif'
-                }}>
-                  為您精選熱門信用卡
-                </p>
               </div>
             )}
 

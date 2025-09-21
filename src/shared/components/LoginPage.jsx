@@ -3,13 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toysIcon from '../images/account/toys_presents_icon.png';
 import logoutIcon from '../images/account/icon/logout.svg';
 import refreshIcon from '../images/account/icon/refresh.svg';
+import deleteIcon from '../images/account/icon/delete.svg';
+import leftArrowIcon from '../images/account/icon/left-arrow.svg';
 import { openLoginPage } from '../api/auth';
 import { startCookieMonitor } from '../utils/simple-cookie-monitor';
 import { useToast } from '../contexts/ToastContext';
 
 function LoginPage() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // 初始為 true，避免閃爍
   const { showToast } = useToast();
 
   // 新增卡片表單狀態
@@ -90,6 +92,7 @@ function LoginPage() {
 
   const checkLoginStatus = async () => {
     console.log('🔄 [LoginPage] 檢查登入狀態...');
+    setLoading(true);
 
     try {
       // 先檢查 chrome.storage.local 有沒有 token
@@ -141,6 +144,8 @@ function LoginPage() {
     } catch (error) {
       console.error('💥 [LoginPage] 檢查失敗:', error);
       setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -415,53 +420,64 @@ function LoginPage() {
 
   if (loading) {
     return (
-      <div style={{
-        fontFamily: '"Kulim Park", sans-serif',
-        padding: '16px',
-        maxWidth: '400px',
-        margin: '0 auto',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxSizing: 'border-box'
-      }}>
-        <div className="login_view" style={{
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        style={{
+          fontFamily: '"Kulim Park", sans-serif',
+          padding: '16px',
+          maxWidth: '400px',
+          margin: '0 auto',
+          textAlign: 'center',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '300px',
-          textAlign: 'center'
+          minHeight: '200px'
         }}>
-          <div className="login_img" style={{
-            marginBottom: '30px'
-          }}>
-            <img
-              src={toysIcon}
-              alt="禮物圖示"
-              className="login-icon"
-              style={{
-                width: '80px',
-                height: '80px',
-                marginBottom: '20px',
-                filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
-                animation: 'pulse 2s infinite'
-              }}
-            />
-            <h2 className="login-title" style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#6b7280',
-              margin: '0',
-              fontFamily: '"Kulim Park", sans-serif'
-            }}>
-              載入中...
-            </h2>
+          {/* 載入動畫圓點 */}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {[0, 1, 2].map((index) => (
+                <motion.div
+                  key={index}
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    backgroundColor: '#3b82f6',
+                    borderRadius: '50%'
+                  }}
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.5, 1, 0.5]
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    delay: index * 0.2
+                  }}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
+
+          <motion.div
+            style={{
+              fontSize: '16px',
+              color: '#6b7280',
+              fontFamily: '"Kulim Park", sans-serif'
+            }}
+            animate={{
+              opacity: [0.6, 1, 0.6]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity
+            }}
+          >
+            檢查登入狀態...
+          </motion.div>
+        </motion.div>
     );
   }
 
@@ -504,14 +520,16 @@ function LoginPage() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '18px',
                   cursor: 'pointer',
                   marginRight: '10px',
                   padding: '5px',
-                  color: '#111827'
+                  color: '#111827',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
-                ←
+                <img src={leftArrowIcon} alt="返回" style={{ width: '18px', height: '18px' }} />
               </button>
               <h1 style={{
                 fontSize: '20px',
@@ -827,7 +845,10 @@ function LoginPage() {
           {/* 卡片列表 */}
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
             {user.userCards && user.userCards.length > 0 ? (
-              user.userCards.slice().reverse().map((userCard, index) => ( // reverse() 讓新卡片顯示在前面
+              user.userCards
+                .slice()
+                .sort((a, b) => b.card.id - a.card.id) // 按 ID 降序排列，最新的 ID 通常最大
+                .map((userCard, index) => ( // 最新卡片顯示在前面
                 <motion.div
                   key={userCard.card.id}
                   initial={{ opacity: 0, x: -20, scale: 0.95 }}
@@ -891,17 +912,27 @@ function LoginPage() {
                       color: '#ea580c',
                       border: '1px solid rgba(249, 115, 22, 0.3)',
                       borderRadius: '20px',
-                      padding: '6px 16px',
-                      fontSize: '12px',
+                      padding: '8px',
                       cursor: 'pointer',
                       fontWeight: '600',
                       fontFamily: '"Kulim Park", sans-serif',
                       whiteSpace: 'nowrap',
                       position: 'relative',
-                      top: 0
+                      top: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                   >
-                    刪除
+                    <div
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        mask: `url(${deleteIcon}) no-repeat center / contain`,
+                        WebkitMask: `url(${deleteIcon}) no-repeat center / contain`,
+                        backgroundColor: '#ea580c'
+                      }}
+                    />
                   </motion.button>
                 </motion.div>
               ))

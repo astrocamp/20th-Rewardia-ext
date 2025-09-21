@@ -1,8 +1,13 @@
 import React, { createContext, useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toastOkIcon from '../images/account/icon/toast-ok.svg';
+import toastErrorIcon from '../images/account/icon/toast-error.svg';
+import toastWarningIcon from '../images/account/icon/toast-warning.svg';
+import toastInfoIcon from '../images/account/icon/toast-info.svg';
 
 // 創建 Toast Context
 const ToastContext = createContext();
+
 
 // Toast 動畫variants
 const toastVariants = {
@@ -38,25 +43,29 @@ const toastStyles = {
     backgroundColor: '#d1fae5',
     borderColor: '#10b981',
     textColor: '#065f46',
-    icon: '✓'
+    iconColor: '#10b981',
+    iconSvg: toastOkIcon
   },
   error: {
     backgroundColor: '#fecaca',
     borderColor: '#ef4444',
     textColor: '#991b1b',
-    icon: '!'
+    iconColor: '#ef4444',
+    iconSvg: toastErrorIcon
   },
   warning: {
     backgroundColor: '#fef3c7',
     borderColor: '#f59e0b',
     textColor: '#92400e',
-    icon: '⚠'
+    iconColor: '#f59e0b',
+    iconSvg: toastWarningIcon
   },
   info: {
     backgroundColor: '#dbeafe',
     borderColor: '#3b82f6',
     textColor: '#1e40af',
-    icon: 'i'
+    iconColor: '#3b82f6',
+    iconSvg: toastInfoIcon
   }
 };
 
@@ -139,17 +148,20 @@ export function ToastProvider({ children }) {
                 <div style={{
                   width: '24px',
                   height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: style.borderColor,
-                  color: 'white',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '12px',
-                  fontWeight: '600',
                   flexShrink: 0
                 }}>
-                  {style.icon}
+                  <div
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      mask: `url(${style.iconSvg}) no-repeat center / contain`,
+                      WebkitMask: `url(${style.iconSvg}) no-repeat center / contain`,
+                      backgroundColor: style.iconColor
+                    }}
+                  />
                 </div>
 
                 {/* 訊息 */}
