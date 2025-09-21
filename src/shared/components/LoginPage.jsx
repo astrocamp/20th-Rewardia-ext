@@ -92,10 +92,9 @@ function LoginPage() {
     console.log('🔄 [LoginPage] 檢查登入狀態...');
 
     try {
-      // 先檢查 localStorage 有沒有 token
-      const token = localStorage.getItem('authToken');
-      const username = localStorage.getItem('username');
-      const userID = localStorage.getItem('userID');
+      // 先檢查 chrome.storage.local 有沒有 token
+      const result = await chrome.storage.local.get(['authToken', 'username', 'userID']);
+      const { authToken: token, username, userID } = result;
 
       console.log('💾 [LoginPage] 本地資料:', {
         hasToken: !!token,
@@ -109,9 +108,8 @@ function LoginPage() {
         await fetchTokenFromAPI();
 
         // 重新檢查
-        const newToken = localStorage.getItem('authToken');
-        const newUsername = localStorage.getItem('username');
-        const newUserID = localStorage.getItem('userID');
+        const newResult = await chrome.storage.local.get(['authToken', 'username', 'userID']);
+        const { authToken: newToken, username: newUsername, userID: newUserID } = newResult;
 
         if (newToken && newUsername) {
           console.log('✅ [LoginPage] 成功取得 token');
@@ -185,9 +183,11 @@ function LoginPage() {
         console.log('🎫 [LoginPage] API 回應:', data);
 
         if (data.token) {
-          localStorage.setItem('authToken', data.token);
-          localStorage.setItem('username', data.username);
-          localStorage.setItem('userID', data.user_id);
+          await chrome.storage.local.set({
+            authToken: data.token,
+            username: data.username,
+            userID: data.user_id,
+          });
         }
       }
     } catch (error) {
@@ -200,13 +200,13 @@ function LoginPage() {
     openLoginPage();
 
     // 簡單的定期檢查（每3秒檢查一次）
-    const checkInterval = setInterval(() => {
+    const checkInterval = setInterval(async () => {
       console.log('🔄 [LoginPage] 定期檢查登入狀態...');
-      checkLoginStatus();
+      await checkLoginStatus();
 
       // 如果檢查到已登入，停止檢查
-      const token = localStorage.getItem('authToken');
-      if (token) {
+      const checkResult = await chrome.storage.local.get(['authToken']);
+      if (checkResult.authToken) {
         clearInterval(checkInterval);
       }
     }, 3000);
@@ -217,13 +217,11 @@ function LoginPage() {
     }, 30000);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('🚪 [LoginPage] 使用者點擊登出');
 
     // 清除本地資料
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('username');
-    localStorage.removeItem('userID');
+    await chrome.storage.local.remove(['authToken', 'username', 'userID']);
 
     // 更新狀態
     setUser(null);

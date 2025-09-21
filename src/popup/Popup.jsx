@@ -14,6 +14,9 @@ export default function Popup() {
   const [active, setActive] = useState('account') // 預設顯示帳號頁面
   const [showCalculatorOverlay, setShowCalculatorOverlay] = useState(false)
 
+  // 圖片基礎路徑設定
+  const IMAGE_BASE_URL = 'https://rewardia-card-img.s3.ap-southeast-2.amazonaws.com/media/credit_cards/'
+
   // 首頁搜尋狀態 - 參考原版邏輯
   const [searchParams, setSearchParams] = useState({
     bank: '',
@@ -782,7 +785,7 @@ export default function Popup() {
                     }}>
                       {card.image ? (
                         <img
-                          src={card.image}
+                          src={card.image ? (card.image.includes('http') ? card.image : IMAGE_BASE_URL + card.image.split('/').pop()) : ''}
                           alt={card.name}
                           style={{
                             width: '100%',

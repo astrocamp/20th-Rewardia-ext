@@ -9,7 +9,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["*://www.eslite.com/*","*://www.klook.com/*","*://24h.pchome.com.tw/*","*://www.momoshop.com.tw/*","*://cart.momoshop.com.tw/*", "https://rewardia.net/*","http://localhost:8000/*"],
       "js": ["content.js"]
     }
   ],
@@ -17,13 +17,11 @@
     "service_worker": "background.js"
   },
   "permissions": [
-    "activeTab",
     "storage",
-    "tabs",
-    "cookies"
+    "tabs"
   ],
   "host_permissions": [
-    "https://*/*",
+    "https://rewardia.net/*",
     "http://localhost:8000/*"
   ],
   "icons": {
