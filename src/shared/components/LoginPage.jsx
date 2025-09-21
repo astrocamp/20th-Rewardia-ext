@@ -225,6 +225,14 @@ function LoginPage() {
   const handleLogout = async () => {
     console.log('🚪 [LoginPage] 使用者點擊登出');
 
+    // 顯示確認對話框
+    const confirmLogout = window.confirm('確定要登出嗎？登出後需要重新登入才能管理卡片。');
+
+    if (!confirmLogout) {
+      console.log('❌ [LoginPage] 使用者取消登出');
+      return;
+    }
+
     // 清除本地資料
     await chrome.storage.local.remove(['authToken', 'username', 'userID']);
 
@@ -232,6 +240,7 @@ function LoginPage() {
     setUser(null);
 
     console.log('✅ [LoginPage] 登出完成');
+    showToast('已成功登出', 'success');
   };
 
   const handleRefresh = () => {
@@ -808,7 +817,7 @@ function LoginPage() {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => window.location.reload()}
+                onClick={checkLoginStatus}
                 style={{
                   background: 'rgba(156, 163, 175, 0.1)',
                   border: '1px solid rgba(156, 163, 175, 0.3)',
@@ -851,9 +860,9 @@ function LoginPage() {
                 .map((userCard, index) => ( // 最新卡片顯示在前面
                 <motion.div
                   key={userCard.card.id}
-                  initial={{ opacity: 0, x: -20, scale: 0.95 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: 20, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
                   transition={{
                     delay: index * 0.1,
                     duration: 0.4,
@@ -864,19 +873,16 @@ function LoginPage() {
                   whileHover={{
                     y: -4,
                     scale: 1.02,
-                    background: "rgba(255, 255, 255, 0.25)",
-                    boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
-                    backdropFilter: "blur(15px)"
+                    boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
                   }}
                   whileTap={{ scale: 0.98 }}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    backdropFilter: 'blur(10px)',
-                    borderRadius: '16px',
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '12px',
                     padding: '16px',
                     marginBottom: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                     cursor: 'pointer',
                     position: 'relative',
                     display: 'flex',

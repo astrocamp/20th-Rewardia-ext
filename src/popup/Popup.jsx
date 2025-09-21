@@ -41,6 +41,51 @@ export default function Popup() {
   })
   const [showSearchArea, setShowSearchArea] = useState(false)
 
+  // 用戶相關狀態
+  const [user, setUser] = useState(null)
+  const [userCards, setUserCards] = useState([])
+
+  // 檢查用戶登入狀態
+  const checkUserLogin = async () => {
+    try {
+      const storage = await chrome.storage.local.get(['authToken', 'username', 'userID'])
+      if (storage.authToken && storage.userID) {
+        setUser({
+          token: storage.authToken,
+          userName: storage.username,
+          userID: storage.userID
+        })
+        // 獲取用戶卡片
+        await getUserCards(storage.authToken, storage.userID)
+      }
+    } catch (error) {
+      console.error('檢查用戶登入狀態失敗:', error)
+    }
+  }
+
+  // 獲取用戶卡片
+  const getUserCards = async (token, userID) => {
+    try {
+      const response = await fetch(`https://rewardia.net/api/users/${userID}/cards/`, {
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+      if (response.ok) {
+        const cards = await response.json()
+        setUserCards(cards)
+      }
+    } catch (error) {
+      console.error('獲取用戶卡片失敗:', error)
+    }
+  }
+
+  // 檢查是否為用戶持有的卡片
+  const isUserCard = (cardId) => {
+    return userCards.some(userCard => userCard.card.id === cardId)
+  }
+
   // 載入所有資料 - 參考原版 main-data API
   const fetchAllData = async () => {
     try {
@@ -229,6 +274,11 @@ export default function Popup() {
       fetchAllData()
     }
   }, [active])
+
+  // 檢查用戶登入狀態
+  useEffect(() => {
+    checkUserLogin()
+  }, [])
 
   // 點擊外部關閉下拉選單
   useEffect(() => {
@@ -783,7 +833,7 @@ export default function Popup() {
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '12px',
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                     }}
                   >
                     {/* 卡片頭部：圖片和名稱 */}
@@ -812,16 +862,42 @@ export default function Popup() {
                           <span style={{ fontSize: '8px', color: '#9ca3af' }}>卡片</span>
                         )}
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{
-                          fontSize: '16px',
-                          fontWeight: '700',
-                          margin: '0 0 4px 0',
-                          color: '#1f2937',
-                          lineHeight: '1.3'
+                      <div style={{
+                        flex: 1,
+                        position: 'relative'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          marginBottom: '4px'
                         }}>
-                          {card.name}
-                        </h3>
+                          <h3 style={{
+                            fontSize: '16px',
+                            fontWeight: '700',
+                            margin: '0',
+                            color: '#1f2937',
+                            lineHeight: '1.3',
+                            flex: 1,
+                            paddingRight: isUserCard(card.id) ? '8px' : '0'
+                          }}>
+                            {card.name}
+                          </h3>
+                          {isUserCard(card.id) && (
+                            <span style={{
+                              fontSize: '11px',
+                              color: '#2563eb',
+                              fontWeight: '600',
+                              backgroundColor: '#eff6ff',
+                              padding: '3px 6px',
+                              borderRadius: '6px',
+                              whiteSpace: 'nowrap',
+                              border: '1px solid #dbeafe'
+                            }}>
+                              你的卡片
+                            </span>
+                          )}
+                        </div>
                         <p style={{
                           fontSize: '12px',
                           color: '#6b7280',
@@ -875,33 +951,34 @@ export default function Popup() {
                     )}
 
                     {/* 回饋資訊 */}
-                    {card.rewards && (card.rewards.maxRate || card.rewards.minRate) && (
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        borderTop: '1px solid #f3f4f6',
-                        paddingTop: '12px'
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      borderTop: '1px solid #f3f4f6',
+                      paddingTop: '12px'
+                    }}>
+                      <span style={{
+                        fontSize: '12px',
+                        color: '#6b7280',
+                        fontWeight: '500'
                       }}>
-                        <span style={{
-                          fontSize: '12px',
-                          color: '#6b7280',
-                          fontWeight: '500'
-                        }}>
-                          回饋率
-                        </span>
-                        <span style={{
-                          fontSize: '14px',
-                          color: '#059669',
-                          fontWeight: '600'
-                        }}>
-                          {card.rewards.minRate === card.rewards.maxRate
+                        回饋率
+                      </span>
+                      <span style={{
+                        fontSize: '14px',
+                        color: card.rewards && (card.rewards.maxRate || card.rewards.minRate) ? '#059669' : '#9ca3af',
+                        fontWeight: '600'
+                      }}>
+                        {card.rewards && (card.rewards.maxRate || card.rewards.minRate) ? (
+                          card.rewards.minRate === card.rewards.maxRate
                             ? `${card.rewards.maxRate}% 回饋`
                             : `最低${card.rewards.minRate}% ~ 最高${card.rewards.maxRate}%`
-                          }
-                        </span>
-                      </div>
-                    )}
+                        ) : (
+                          '無優惠資料'
+                        )}
+                      </span>
+                    </div>
                   </motion.div>
                 ))}
               </div>
