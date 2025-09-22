@@ -9,6 +9,7 @@ export default defineConfig({
       input: {
         popup: resolve(__dirname, 'src/popup/popup.html'),
         content: resolve(__dirname, 'src/content_scripts/content_script.js'),
+        'content_script.css': resolve(__dirname, 'src/content_scripts/content_script.css'),
         background: resolve(__dirname, 'src/background/background.js'),
       },
       output: {
@@ -19,6 +20,9 @@ export default defineConfig({
         assetFileNames: (assetInfo) => {
           if (assetInfo.name && assetInfo.name.includes('popup.html')) {
             return 'popup.html';
+          }
+          if (assetInfo.name && assetInfo.name.includes('.css')) {
+            return '[name].[ext]';
           }
           return '[name].[ext]';
         },
