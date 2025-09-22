@@ -232,21 +232,87 @@ export default function Popup() {
     })
   }
 
-  // 處理搜尋參數變更 - 簡化版本，參考原版
+  // 處理搜尋參數變更 - 層級式搜尋邏輯
   const handleSearchChange = (field, value) => {
     closeAllDropdowns()
 
-    // 參考原版：當使用下拉選單時，清空關鍵字搜尋
-    if (field !== 'keyword') {
-      setSearchParams(prev => ({ ...prev, [field]: value, keyword: '' }))
-    } else {
+    let newSearchParams = { ...searchParams }
+
+    if (field === 'keyword') {
       // 當使用關鍵字搜尋時，清空其他選擇器
-      setSearchParams({ bank: '', category: '', scope: '', keyword: value })
+      newSearchParams = { bank: '', category: '', scope: '', keyword: value }
+    } else if (field === 'bank') {
+      // 情境一：改了銀行，其他下面都直接清空
+      newSearchParams = {
+        ...newSearchParams,
+        bank: value,
+        category: '',
+        scope: '',
+        keyword: ''
+      }
+    } else if (field === 'category') {
+      // 情境二：改了優惠類別，店家範圍清空
+      newSearchParams = {
+        ...newSearchParams,
+        category: value,
+        scope: '',
+        keyword: ''
+      }
+    } else if (field === 'scope') {
+      // 店家範圍變更時，清空關鍵字但保留上層選擇
+      newSearchParams = {
+        ...newSearchParams,
+        scope: value,
+        keyword: ''
+      }
     }
 
-    // 延遲執行搜尋，確保狀態更新完成
+    setSearchParams(newSearchParams)
+
+    // 直接使用新的搜尋參數執行搜尋，避免狀態同步問題
     setTimeout(() => {
-      performSearch()
+      setViewMode('list')
+
+      let filteredCards = [...originalCards]
+
+      // 依序套用篩選條件
+      if (newSearchParams.bank) {
+        filteredCards = filteredCards.filter(card => card.bank === newSearchParams.bank)
+      }
+
+      if (newSearchParams.category) {
+        filteredCards = filteredCards.filter(card =>
+          card.rewards && card.rewards.some(reward => reward.category && reward.category.includes(newSearchParams.category))
+        )
+      }
+
+      if (newSearchParams.scope) {
+        filteredCards = filteredCards.filter(card =>
+          card.rewards && card.rewards.some(reward => reward.scope === newSearchParams.scope)
+        )
+      }
+
+      if (newSearchParams.keyword?.trim()) {
+        const keyword = newSearchParams.keyword.trim().toLowerCase()
+        filteredCards = filteredCards.filter(card => {
+          const bankMatch = card.bank.toLowerCase().includes(keyword)
+          const cardNameMatch = card.name.toLowerCase().includes(keyword)
+          const rewardMatch = card.rewards && card.rewards.some(reward =>
+            (reward.category && reward.category.toLowerCase().includes(keyword)) ||
+            (reward.scope && reward.scope.toLowerCase().includes(keyword)) ||
+            (reward.reward_type && reward.reward_type.toLowerCase().includes(keyword))
+          )
+          return bankMatch || cardNameMatch || rewardMatch
+        })
+      }
+
+      // 處理回饋資訊格式
+      const cardsWithProcessedRewards = filteredCards.slice(0, 10).map(card => ({
+        ...card,
+        rewards: processCardRewards(card.rewards || [])
+      }))
+
+      setDisplayCards(cardsWithProcessedRewards)
     }, 50)
   }
 

@@ -6,6 +6,9 @@ function MerchantRewards() {
   const [merchant, setMerchant] = useState('');
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
+  // 用戶相關狀態
+  const [user, setUser] = useState(null);
+  const [userCards, setUserCards] = useState([]);
 
   // 商家對應表
   const merchantMap = {
@@ -20,8 +23,50 @@ function MerchantRewards() {
   };
 
   useEffect(() => {
+    checkUserLogin();
     getMerchantCards();
   }, []);
+
+  // 檢查用戶登入狀態
+  const checkUserLogin = async () => {
+    try {
+      const storage = await chrome.storage.local.get(['authToken', 'username', 'userID'])
+      if (storage.authToken && storage.userID) {
+        setUser({
+          token: storage.authToken,
+          userName: storage.username,
+          userID: storage.userID
+        })
+        // 獲取用戶卡片
+        await getUserCards(storage.authToken, storage.userID)
+      }
+    } catch (error) {
+      console.error('檢查用戶登入狀態失敗:', error)
+    }
+  }
+
+  // 獲取用戶卡片
+  const getUserCards = async (token, userID) => {
+    try {
+      const response = await fetch(`https://rewardia.net/api/users/${userID}/cards/`, {
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+      if (response.ok) {
+        const cards = await response.json()
+        setUserCards(cards)
+      }
+    } catch (error) {
+      console.error('獲取用戶卡片失敗:', error)
+    }
+  }
+
+  // 檢查是否為用戶持有的卡片
+  const isUserCard = (cardId) => {
+    return userCards.some(userCard => userCard.card.id === cardId)
+  }
 
   // get_current_url 函數
   async function getCurrentUrl() {
@@ -317,6 +362,22 @@ function MerchantRewards() {
                       }}>
                         {reward.card?.name || '卡片名稱待更新'}
                       </h2>
+
+                      {/* 用戶卡片標記 */}
+                      {isUserCard(reward.card?.id) && (
+                        <span style={{
+                          backgroundColor: '#dbeafe',
+                          color: '#1e40af',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          marginLeft: '8px',
+                          fontFamily: '"Kulim Park", sans-serif'
+                        }}>
+                          你的卡片
+                        </span>
+                      )}
 
                       {/* 前三名右側皇冠 icon */}
                       {isTopThree && rankInfo.crownColor && (
