@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Rewardia Chrome Extension",
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "/src/popup.html",
     "default_title": "Rewardia"
   },
   "content_scripts": [
