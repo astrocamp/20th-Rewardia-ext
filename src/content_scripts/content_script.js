@@ -55,7 +55,7 @@ async function show_rewardia_popup() {
   setTimeout(() => {
     popup.remove();
     sessionStorage.setItem("close_popup", "true");
-  }, 3000);
+  }, 5000);
 }
 
 if (current_url == `${base_url}/users/member/`) {
