@@ -29,7 +29,7 @@ async function show_rewardia_popup() {
   popup.className = "rewardia_popup";
   popup.innerHTML = `<div class="popup_left">
   <div class="popup_logo"><img src="${chrome.runtime.getURL(
-    "public/icons/icon128.png"
+    "icons/icon128.png"
   )}"></div>
   <div class="popup_text">偵測到信用卡，點此通知查看</div></div>
   <div class="popup_close_btn">X</div>`;
@@ -82,7 +82,7 @@ async function display_momo_rewards(price, rate, card, is_user_card) {
     const display = document.createElement("span");
     display.className = "display_rewards";
     display.innerHTML = `<img src="${chrome.runtime.getURL(
-      "public/icons/icon128.png"
+      "icons/icon128.png"
     )}"><p>刷 <span>${card}</span>，最高回饋${reward}元</p>`;
     checkout_price.insertAdjacentElement("afterend", display);
     if (is_user_card) {
@@ -217,7 +217,7 @@ function display_cards(cards, merchant_name) {
   const card_selector = document.createElement("div");
   card_selector.className = "card_selector";
   card_selector.innerHTML = `<img src="${chrome.runtime.getURL(
-    "images/Rewardia_16.png"
+    "icons/icon16.png"
   )}"><span class="card_selector_title">使用者信用卡（點選即可填入卡號）</span>：<ul class="card_list"></ul>`;
   credit_card_box.insertAdjacentElement("beforeend", card_selector);
 
