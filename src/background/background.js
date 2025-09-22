@@ -1,4 +1,4 @@
-console.log('Rewardia Background Script 已載入');
+console.log("Rewardia Background Script 已載入");
 
 // 整合組員的後端邏輯
 const base_url = "https://rewardia.net/";
@@ -86,10 +86,10 @@ async function get_userID() {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Background 收到訊息:', message);
+  console.log("Background 收到訊息:", message);
 
-  if (message.type === 'FROM_CONTENT_SCRIPT') {
-    console.log('來自 Content Script 的訊息:', message.data);
+  if (message.type === "FROM_CONTENT_SCRIPT") {
+    console.log("來自 Content Script 的訊息:", message.data);
     sendResponse({ success: true });
     return true;
   }
@@ -122,8 +122,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (message.action === "open_loggedin") {
-    chrome.action.openPopup();
+  if (message.action === "change_login_icon") {
     chrome.action.setIcon({
       path: "images/Rewardia-loggedin.png",
     });
@@ -138,12 +137,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // 自動登入監聽 - 整合組員的核心功能
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete" && tab.url && tab.url.includes("rewardia.net")) {
-    console.log('🎯 [Background] 偵測到 rewardia.net 頁面載入，嘗試自動取得 token');
+  if (
+    changeInfo.status === "complete" &&
+    tab.url &&
+    tab.url.includes("rewardia.net")
+  ) {
+    console.log(
+      "🎯 [Background] 偵測到 rewardia.net 頁面載入，嘗試自動取得 token"
+    );
     await fetch_token(token_url);
   }
 });
 
 chrome.action.onClicked.addListener((tab) => {
-  console.log('套件圖示被點擊:', tab);
+  console.log("套件圖示被點擊:", tab);
 });

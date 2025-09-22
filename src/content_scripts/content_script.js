@@ -1,3 +1,4 @@
+const base_url = "https://rewardia.net";
 const current_host = window.location.hostname;
 const current_url = window.location.href;
 
@@ -28,7 +29,7 @@ async function show_rewardia_popup() {
   popup.className = "rewardia_popup";
   popup.innerHTML = `<div class="popup_left">
   <div class="popup_logo"><img src="${chrome.runtime.getURL(
-    "images/Rewardia.png"
+    "public/icons/icon128.png"
   )}"></div>
   <div class="popup_text">偵測到信用卡，點此通知查看</div></div>
   <div class="popup_close_btn">X</div>`;
@@ -57,22 +58,23 @@ async function show_rewardia_popup() {
   }, 3000);
 }
 
-if (current_url == "https://rewardia.net/users/member/") {
+if (current_url == `${base_url}/users/member/`) {
   chrome.runtime.sendMessage({
-    action: "open_loggedin",
+    action: "change_login_icon",
   });
 }
 
 // 顯示回饋金額在momo網站相關
-async function display_momo_rewards(rate, card, is_user_card) {
+function extract_price_from_element(selector) {
+  const element = document.querySelector(selector);
+  if (!element) return null;
+  let price = Number(element.textContent.trim().replace(/,/g, "").slice(1));
+
+  return price;
+}
+
+async function display_momo_rewards(price, rate, card, is_user_card) {
   const checkout_price = document.querySelector(".checkout-item");
-  let price = Number(
-    document
-      .querySelector(".checkout-content-price.final-price")
-      .textContent.trim()
-      .replace(/,/g, "")
-      .slice(1)
-  );
 
   let reward = (price * (rate / 100)).toFixed(2);
 
@@ -80,7 +82,7 @@ async function display_momo_rewards(rate, card, is_user_card) {
     const display = document.createElement("span");
     display.className = "display_rewards";
     display.innerHTML = `<img src="${chrome.runtime.getURL(
-      "images/Rewardia.png"
+      "public/icons/icon128.png"
     )}"><p>刷 <span>${card}</span>，最高回饋${reward}元</p>`;
     checkout_price.insertAdjacentElement("afterend", display);
     if (is_user_card) {
@@ -91,7 +93,7 @@ async function display_momo_rewards(rate, card, is_user_card) {
   }
 }
 
-if (current_url.includes("cart")) {
+if (current_url.includes("cart") && current_url.includes(merchant)) {
   const checkout_price = document.querySelector(
     ".checkout-content-price.final-price"
   );
@@ -99,12 +101,8 @@ if (current_url.includes("cart")) {
     let last_price = 0;
 
     function check_price() {
-      const price = Number(
-        document
-          .querySelector(".checkout-content-price.final-price")
-          .textContent.trim()
-          .replace(/,/g, "")
-          .slice(1)
+      const price = extract_price_from_element(
+        ".checkout-content-price.final-price"
       );
 
       if (price !== last_price) {
@@ -114,7 +112,7 @@ if (current_url.includes("cart")) {
             action: "calculate",
           },
           async (response) => {
-            if (!response?.data || !response?.cards) return;
+            if (!response?.data || response.cards.length == 0) return;
             const card = response.data;
             const max_rate = Number(card.max_rate);
             const card_name = card.card.name;
@@ -122,7 +120,12 @@ if (current_url.includes("cart")) {
               return card.card.name;
             });
             const is_user_card = user_cards.includes(card_name);
-            await display_momo_rewards(max_rate, card_name, is_user_card);
+            await display_momo_rewards(
+              price,
+              max_rate,
+              card_name,
+              is_user_card
+            );
           }
         );
       }
@@ -130,4 +133,151 @@ if (current_url.includes("cart")) {
 
     setInterval(check_price, 2000);
   }
+}
+
+// 填寫信用卡資訊相關
+
+function get_user_cards() {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      {
+        action: "get_user_cards",
+      },
+      (response) => {
+        resolve(response.data);
+      }
+    );
+  });
+}
+
+function return_reward(reward, price) {
+  if (reward.min_rate && reward.max_rate) {
+    const max_card_rate_result = (price * (reward.max_rate / 100)).toFixed(2);
+    const min_card_rate_result = (price * (reward.min_rate / 100)).toFixed(2);
+    const result = `回饋${min_card_rate_result} - ${max_card_rate_result}元`;
+    return result;
+  } else if (reward.min_rate == null) {
+    const card_rate = reward.max_rate;
+    const result = (price * (card_rate / 100)).toFixed(2);
+    return `最高回饋 ${result}元`;
+  } else if (reward.max_rate == null) {
+    const card_rate = reward.min_rate;
+    const result = (price * (card_rate / 100)).toFixed(2);
+    return `最低回饋 ${result}元`;
+  }
+}
+
+// 篩選出有momo或國內回饋的回饋資訊
+function check_reward_scope(rewards, merchant_name) {
+  const merchant_reward = rewards.filter(
+    (reward) => reward.scope == merchant_name
+  );
+  const domestic_reward = rewards.filter((reward) => reward.scope == "國內");
+  if (merchant_reward.length > 0) {
+    return merchant_reward;
+  } else if (domestic_reward.length > 0) {
+    return domestic_reward;
+  } else {
+    return [];
+  }
+}
+
+function calculate_numeric_reward(reward, price) {
+  if ((reward.max_rate && reward.min_rate) || reward.min_rate == null) {
+    const max_card_rate_result = (price * (reward.max_rate / 100)).toFixed(2);
+    return max_card_rate_result;
+  } else if (reward.max_rate == null) {
+    const result = (price * (reward.min_rate / 100)).toFixed(2);
+    return result;
+  }
+}
+
+function fill_card_num(card_number) {
+  const card_fields = 4;
+
+  for (let i = 1; i <= card_fields; i++) {
+    let element = document.querySelector(`#cardNo_${i}`);
+
+    //擷取(0,4), (4,8), (8,12), (12,16)
+    element.value = card_number.slice((i - 1) * card_fields, i * card_fields);
+  }
+
+  const card_num_3 = document.querySelector("#cardNo_3_temp");
+  card_num_3.value = "****";
+}
+
+function display_cards(cards, merchant_name) {
+  // momo購物車元素
+  const credit_card_box = document.querySelector("#cardPaymentBox");
+  const price = Number(
+    document.querySelector("#paySumB").textContent.trim().replace(/,/g, "")
+  );
+
+  // 創造使用者卡片選單
+  const card_selector = document.createElement("div");
+  card_selector.className = "card_selector";
+  card_selector.innerHTML = `<img src="${chrome.runtime.getURL(
+    "images/Rewardia_16.png"
+  )}"><span class="card_selector_title">使用者信用卡（點選即可填入卡號）</span>：<ul class="card_list"></ul>`;
+  credit_card_box.insertAdjacentElement("beforeend", card_selector);
+
+  // 卡片選項
+  const card_list = card_selector.querySelector(".card_list");
+
+  const cards_with_rewards = cards.map((card) => {
+    let displayed_reward;
+    let numeric_reward;
+
+    const reward = check_reward_scope(card.rewards, merchant_name);
+    if (reward.length == 0) {
+      displayed_reward = `無適用回饋`;
+      numeric_reward = 0;
+    } else {
+      displayed_reward = return_reward(reward[0], price);
+      // 計算一個回饋的值作為排序使用
+      numeric_reward = calculate_numeric_reward(reward[0], price);
+    }
+
+    return { ...card, displayed_reward, numeric_reward };
+  });
+
+  cards_with_rewards.sort((a, b) => {
+    return Number(b.numeric_reward) - Number(a.numeric_reward);
+  });
+
+  cards_with_rewards.forEach((card) => {
+    const card_items = `<li class="card_item" data-id="${card.card.id}"><div>${card.card.name}</div><div>${card.displayed_reward}</div></li>`;
+    card_list.insertAdjacentHTML("beforeend", card_items);
+
+    const card_item = document.querySelector(`li[data-id='${card.card.id}']`);
+    card_item.addEventListener("click", function () {
+      //選擇卡片最上方的標題
+      const card_selector_title = document.querySelector(
+        ".card_selector_title"
+      );
+      if (card.card_number == null) {
+        card_selector_title.textContent =
+          "使用者信用卡（點選即可填入卡號）：無適用卡號";
+      } else {
+        card_selector_title.textContent = "使用者信用卡（點選即可填入卡號）";
+        fill_card_num(card.card_number);
+      }
+    });
+  });
+}
+
+if (current_url.includes("cart") && current_url.includes(merchant)) {
+  const observer = new MutationObserver(async (mutations) => {
+    const credit_card_box = document.querySelector("#cardPaymentBox");
+    const cards = await get_user_cards();
+
+    if (credit_card_box) {
+      observer.disconnect();
+      display_cards(cards, merchantMap[merchant]);
+    }
+  });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 }
