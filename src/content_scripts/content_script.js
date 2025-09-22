@@ -270,7 +270,7 @@ if (current_url.includes("cart") && current_url.includes(merchant)) {
   const observer = new MutationObserver(async (mutations) => {
     const credit_card_box = document.querySelector("#cardPaymentBox");
     const cards = await get_user_cards();
-
+    console.log(cards);
     if (credit_card_box) {
       observer.disconnect();
       display_cards(cards, merchantMap[merchant]);

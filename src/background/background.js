@@ -1,7 +1,7 @@
 console.log("Rewardia Background Script 已載入");
 
 // 整合組員的後端邏輯
-const base_url = "https://rewardia.net/";
+const base_url = "https://rewardia.net";
 const token_url = `${base_url}/users/api/get_token`;
 
 const merchantMap = {
@@ -124,7 +124,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "change_login_icon") {
     chrome.action.setIcon({
-      path: "images/Rewardia-loggedin.png",
+      path: "icons/Rewardia-loggedin.png",
     });
   }
   if (message.action === "open_extension") {
