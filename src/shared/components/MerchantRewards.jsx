@@ -469,6 +469,20 @@ function MerchantRewards() {
         </AnimatePresence>
       </div>
 
+      {/* 免責聲明 */}
+      <div
+        style={{
+          textAlign: "center",
+          color: "#6b7280",
+          fontSize: "12px",
+          marginBottom: "16px",
+          fontFamily: '"Kulim Park", sans-serif',
+          fontStyle: "italic",
+        }}
+      >
+        實際回饋資訊以信用卡活動網站為主。
+      </div>
+
       {/* 重新檢測按鈕 */}
       <button
         onClick={handleRefresh}
