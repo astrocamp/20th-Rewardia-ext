@@ -223,20 +223,35 @@ function calculate_numeric_reward(reward, price) {
 }
 
 function fill_card_num(card_number) {
-  const card_fields = 4;
+  // momo結帳頁面第一種版型
+  const iframe = document.getElementById("billpage_iframe");
 
-  for (let i = 1; i <= card_fields; i++) {
-    let element = document.querySelector(`#cardNo_${i}`);
-
-    //擷取(0,4), (4,8), (8,12), (12,16)
-    element.value = card_number.slice((i - 1) * card_fields, i * card_fields);
+  if (iframe) {
+    // Send message to iframe
+    iframe.contentWindow.postMessage(
+      {
+        action: "fillCreditCard",
+        cardNumber: card_number,
+      },
+      "https://bsp.momoshop.com.tw"
+    );
   }
 
+  // momo結帳頁面第二種版型
+  const card_fields = 4;
   const card_num_3 = document.querySelector("#cardNo_3_temp");
-  card_num_3.value = "****";
+
+  if (card_num_3) {
+    for (let i = 1; i <= card_fields; i++) {
+      let element = document.querySelector(`#cardNo_${i}`);
+      //擷取(0,4), (4,8), (8,12), (12,16)
+      element.value = card_number.slice((i - 1) * card_fields, i * card_fields);
+    }
+    card_num_3.value = "****";
+  }
 }
 
-function display_cards(cards, merchant_name) {
+function display_cards(cards, merchant_name, card_input) {
   // momo購物車元素
   const credit_card_box = document.querySelector("#cardPaymentBox");
   const price = Number(
@@ -299,6 +314,7 @@ function display_cards(cards, merchant_name) {
 if (current_url.includes("cart") && current_url.includes(merchant)) {
   const observer = new MutationObserver(async (mutations) => {
     const credit_card_box = document.querySelector("#cardPaymentBox");
+
     const cards = await get_user_cards();
 
     if (credit_card_box && cards.length > 0) {
