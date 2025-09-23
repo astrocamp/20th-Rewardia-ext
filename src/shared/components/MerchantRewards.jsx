@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import crownIcon from '../images/account/icon/crown.svg';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import crownIcon from "../images/account/icon/crown.svg";
 
 function MerchantRewards() {
-  const [merchant, setMerchant] = useState('');
+  const [merchant, setMerchant] = useState("");
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
   // 用戶相關狀態
@@ -19,6 +19,7 @@ function MerchantRewards() {
     foodpanda: "foodpanda",
     kkday: "KKday",
     klook: "Klook",
+    shopee: "Shopee",
     ".tw": "國內",
   };
 
@@ -30,43 +31,50 @@ function MerchantRewards() {
   // 檢查用戶登入狀態
   const checkUserLogin = async () => {
     try {
-      const storage = await chrome.storage.local.get(['authToken', 'username', 'userID'])
+      const storage = await chrome.storage.local.get([
+        "authToken",
+        "username",
+        "userID",
+      ]);
       if (storage.authToken && storage.userID) {
         setUser({
           token: storage.authToken,
           userName: storage.username,
-          userID: storage.userID
-        })
+          userID: storage.userID,
+        });
         // 獲取用戶卡片
-        await getUserCards(storage.authToken, storage.userID)
+        await getUserCards(storage.authToken, storage.userID);
       }
     } catch (error) {
-      console.error('檢查用戶登入狀態失敗:', error)
+      console.error("檢查用戶登入狀態失敗:", error);
     }
-  }
+  };
 
   // 獲取用戶卡片
   const getUserCards = async (token, userID) => {
     try {
-      const response = await fetch(`https://rewardia.net/api/users/${userID}/cards/`, {
-        headers: {
-          Authorization: `Token ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
+      const response = await fetch(
+        `https://rewardia.net/api/users/${userID}/cards/`,
+        {
+          headers: {
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.ok) {
-        const cards = await response.json()
-        setUserCards(cards)
+        const cards = await response.json();
+        setUserCards(cards);
       }
     } catch (error) {
-      console.error('獲取用戶卡片失敗:', error)
+      console.error("獲取用戶卡片失敗:", error);
     }
-  }
+  };
 
   // 檢查是否為用戶持有的卡片
   const isUserCard = (cardId) => {
-    return userCards.some(userCard => userCard.card.id === cardId)
-  }
+    return userCards.some((userCard) => userCard.card.id === cardId);
+  };
 
   // get_current_url 函數
   async function getCurrentUrl() {
@@ -104,8 +112,8 @@ function MerchantRewards() {
       const cards = await getRewards(finalMerchant);
       setRewards(cards);
     } catch (error) {
-      console.error('載入商家回饋失敗:', error);
-      setMerchant('未知商家');
+      console.error("載入商家回饋失敗:", error);
+      setMerchant("未知商家");
       setRewards([]);
     } finally {
       setLoading(false);
@@ -116,33 +124,43 @@ function MerchantRewards() {
   const formatRewardRate = (reward) => {
     if (reward.min_rate && reward.max_rate) {
       return (
-        <span>{reward.min_rate} - {reward.max_rate}% 回饋</span>
+        <span>
+          {reward.min_rate} - {reward.max_rate}% 回饋
+        </span>
       );
     } else if (reward.min_rate == null) {
       return (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{
-            backgroundColor: '#dbeafe',
-            color: '#1d4ed8',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontWeight: '600'
-          }}>最高</span>
+        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span
+            style={{
+              backgroundColor: "#dbeafe",
+              color: "#1d4ed8",
+              padding: "2px 8px",
+              borderRadius: "4px",
+              fontSize: "11px",
+              fontWeight: "600",
+            }}
+          >
+            最高
+          </span>
           <span>{reward.max_rate}% 回饋</span>
         </span>
       );
     } else if (reward.max_rate == null) {
       return (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{
-            backgroundColor: '#d1fae5',
-            color: '#065f46',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontWeight: '600'
-          }}>最低</span>
+        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span
+            style={{
+              backgroundColor: "#d1fae5",
+              color: "#065f46",
+              padding: "2px 8px",
+              borderRadius: "4px",
+              fontSize: "11px",
+              fontWeight: "600",
+            }}
+          >
+            最低
+          </span>
           <span>{reward.min_rate}% 回饋</span>
         </span>
       );
@@ -158,31 +176,36 @@ function MerchantRewards() {
   };
 
   // 排序回饋卡片
-  const sortedRewards = [...rewards].sort((a, b) => getRewardValue(b) - getRewardValue(a));
+  const sortedRewards = [...rewards].sort(
+    (a, b) => getRewardValue(b) - getRewardValue(a)
+  );
 
   // 獲取排名標籤和顏色
   const getRankInfo = (index, rewardValue, allValues) => {
     const maxValue = Math.max(...allValues);
     const minValue = Math.min(...allValues);
 
-    if (index === 0) return {
-      rank: '第一名',
-      color: '#fbbf24', // 金色
-      crownColor: '#1e40af', // 統一使用第一名的藍色
-      isSpecial: true
-    };
-    if (index === 1) return {
-      rank: '第二名',
-      color: '#9ca3af', // 銀色
-      crownColor: '#1e40af', // 統一使用第一名的藍色
-      isSpecial: true
-    };
-    if (index === 2) return {
-      rank: '第三名',
-      color: '#f97316', // 銅色
-      crownColor: '#1e40af', // 統一使用第一名的藍色
-      isSpecial: true
-    };
+    if (index === 0)
+      return {
+        rank: "第一名",
+        color: "#fbbf24", // 金色
+        crownColor: "#1e40af", // 統一使用第一名的藍色
+        isSpecial: true,
+      };
+    if (index === 1)
+      return {
+        rank: "第二名",
+        color: "#9ca3af", // 銀色
+        crownColor: "#1e40af", // 統一使用第一名的藍色
+        isSpecial: true,
+      };
+    if (index === 2)
+      return {
+        rank: "第三名",
+        color: "#f97316", // 銅色
+        crownColor: "#1e40af", // 統一使用第一名的藍色
+        isSpecial: true,
+      };
 
     // 檢查是否為最高或最低回饋 - 不顯示最高最低標籤（移除圓角標籤）
     return { rank: null, color: null, isSpecial: false };
@@ -199,39 +222,41 @@ function MerchantRewards() {
         animate={{ opacity: 1 }}
         style={{
           fontFamily: '"Kulim Park", sans-serif',
-          padding: '16px',
-          maxWidth: '400px',
-          margin: '0 auto',
-          textAlign: 'center'
+          padding: "16px",
+          maxWidth: "400px",
+          margin: "0 auto",
+          textAlign: "center",
         }}
       >
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '200px'
-        }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "200px",
+          }}
+        >
           {/* 載入動畫圓點 */}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ marginBottom: "20px" }}>
+            <div style={{ display: "flex", gap: "4px" }}>
               {[0, 1, 2].map((index) => (
                 <motion.div
                   key={index}
                   style={{
-                    width: '8px',
-                    height: '8px',
-                    backgroundColor: '#3b82f6',
-                    borderRadius: '50%'
+                    width: "8px",
+                    height: "8px",
+                    backgroundColor: "#3b82f6",
+                    borderRadius: "50%",
                   }}
                   animate={{
                     scale: [1, 1.2, 1],
-                    opacity: [0.5, 1, 0.5]
+                    opacity: [0.5, 1, 0.5],
                   }}
                   transition={{
                     duration: 1,
                     repeat: Infinity,
-                    delay: index * 0.2
+                    delay: index * 0.2,
                   }}
                 />
               ))}
@@ -240,16 +265,16 @@ function MerchantRewards() {
 
           <motion.div
             style={{
-              fontSize: '16px',
-              color: '#6b7280',
-              fontFamily: '"Kulim Park", sans-serif'
+              fontSize: "16px",
+              color: "#6b7280",
+              fontFamily: '"Kulim Park", sans-serif',
             }}
             animate={{
-              opacity: [0.6, 1, 0.6]
+              opacity: [0.6, 1, 0.6],
             }}
             transition={{
               duration: 2,
-              repeat: Infinity
+              repeat: Infinity,
             }}
           >
             正在偵測商家...
@@ -266,27 +291,28 @@ function MerchantRewards() {
       transition={{ duration: 0.5 }}
       style={{
         fontFamily: '"Kulim Park", sans-serif',
-        padding: '16px',
-        maxWidth: '400px',
-        margin: '0 auto'
+        padding: "16px",
+        maxWidth: "400px",
+        margin: "0 auto",
       }}
     >
       {/* 標題區域 */}
-      <div style={{ marginBottom: '20px', textAlign: 'left' }}>
-        <h1 style={{
-          fontSize: '20px',
-          fontWeight: '700',
-          margin: '0 0 8px 0',
-          color: '#111827',
-          fontFamily: '"Kulim Park", sans-serif'
-        }}>
+      <div style={{ marginBottom: "20px", textAlign: "left" }}>
+        <h1
+          style={{
+            fontSize: "20px",
+            fontWeight: "700",
+            margin: "0 0 8px 0",
+            color: "#111827",
+            fontFamily: '"Kulim Park", sans-serif',
+          }}
+        >
           {merchant} 信用卡回饋
         </h1>
       </div>
 
-
       {/* 回饋卡片列表 */}
-      <div style={{ marginBottom: '20px' }}>
+      <div style={{ marginBottom: "20px" }}>
         <AnimatePresence>
           {sortedRewards && sortedRewards.length > 0 ? (
             (() => {
@@ -307,74 +333,84 @@ function MerchantRewards() {
                       duration: 0.4,
                       type: "spring",
                       stiffness: 300,
-                      damping: 30
+                      damping: 30,
                     }}
                     whileHover={{
                       y: -4,
                       scale: 1.02,
-                      boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                      boxShadow:
+                        "0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
                     }}
                     whileTap={{ scale: 0.98 }}
                     style={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      marginBottom: '16px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                      cursor: 'pointer',
-                      position: 'relative'
+                      backgroundColor: "white",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      marginBottom: "16px",
+                      boxShadow:
+                        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                      cursor: "pointer",
+                      position: "relative",
                     }}
                   >
                     {/* 排名標籤 - 只顯示前三名或最高/最低 */}
                     {rankInfo.rank && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '-8px',
-                        left: '16px',
-                        backgroundColor: rankInfo.color,
-                        color: 'white',
-                        padding: '4px 12px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        fontFamily: '"Kulim Park", sans-serif',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                      }}>
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-8px",
+                          left: "16px",
+                          backgroundColor: rankInfo.color,
+                          color: "white",
+                          padding: "4px 12px",
+                          borderRadius: "12px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          fontFamily: '"Kulim Park", sans-serif',
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                        }}
+                      >
                         {rankInfo.rank}
                       </div>
                     )}
 
-                    <div style={{
-                      marginBottom: '6px',
-                      marginTop: rankInfo.rank ? '8px' : '0',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <h2 style={{
-                        fontSize: isTopThree ? '16px' : '14px',
-                        fontWeight: isTopThree ? '600' : '500',
-                        margin: '0',
-                        color: '#1f2937',
-                        fontFamily: '"Kulim Park", sans-serif',
-                        flex: 1
-                      }}>
-                        {reward.card?.name || '卡片名稱待更新'}
+                    <div
+                      style={{
+                        marginBottom: "6px",
+                        marginTop: rankInfo.rank ? "8px" : "0",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <h2
+                        style={{
+                          fontSize: isTopThree ? "16px" : "14px",
+                          fontWeight: isTopThree ? "600" : "500",
+                          margin: "0",
+                          color: "#1f2937",
+                          fontFamily: '"Kulim Park", sans-serif',
+                          flex: 1,
+                        }}
+                      >
+                        {reward.card?.name || "卡片名稱待更新"}
                       </h2>
 
                       {/* 用戶卡片標記 */}
                       {isUserCard(reward.card?.id) && (
-                        <span style={{
-                          backgroundColor: '#dbeafe',
-                          color: '#1e40af',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          marginLeft: '8px',
-                          fontFamily: '"Kulim Park", sans-serif'
-                        }}>
+                        <span
+                          style={{
+                            backgroundColor: "#dbeafe",
+                            color: "#1e40af",
+                            padding: "4px 8px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            marginLeft: "8px",
+                            fontFamily: '"Kulim Park", sans-serif',
+                          }}
+                        >
                           你的卡片
                         </span>
                       )}
@@ -385,21 +421,24 @@ function MerchantRewards() {
                           src={crownIcon}
                           alt="皇冠"
                           style={{
-                            width: '20px',
-                            height: '20px',
-                            marginLeft: '8px',
-                            filter: 'brightness(0) saturate(100%) invert(23%) sepia(85%) saturate(2345%) hue-rotate(216deg) brightness(91%) contrast(101%)'
+                            width: "20px",
+                            height: "20px",
+                            marginLeft: "8px",
+                            filter:
+                              "brightness(0) saturate(100%) invert(23%) sepia(85%) saturate(2345%) hue-rotate(216deg) brightness(91%) contrast(101%)",
                           }}
                         />
                       )}
                     </div>
 
-                    <div style={{
-                      fontSize: isTopThree ? '14px' : '12px',
-                      color: '#4b5563', // 深灰色
-                      fontWeight: '500',
-                      fontFamily: '"Kulim Park", sans-serif'
-                    }}>
+                    <div
+                      style={{
+                        fontSize: isTopThree ? "14px" : "12px",
+                        color: "#4b5563", // 深灰色
+                        fontWeight: "500",
+                        fontFamily: '"Kulim Park", sans-serif',
+                      }}
+                    >
                       {formatRewardRate(reward)}
                     </div>
                   </motion.div>
@@ -412,16 +451,16 @@ function MerchantRewards() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
               style={{
-                textAlign: 'center',
-                color: '#4b5563',
-                padding: '40px 20px',
-                fontSize: '16px',
+                textAlign: "center",
+                color: "#4b5563",
+                padding: "40px 20px",
+                fontSize: "16px",
                 fontFamily: '"Kulim Park", sans-serif',
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
+                background: "rgba(255, 255, 255, 0.1)",
+                backdropFilter: "blur(8px)",
+                borderRadius: "16px",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
               }}
             >
               目前沒有相關回饋資訊
@@ -434,32 +473,32 @@ function MerchantRewards() {
       <button
         onClick={handleRefresh}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '16px',
-          backgroundColor: '#2563eb',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          fontSize: '16px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
-          width: '100%',
-          justifyContent: 'center',
-          fontFamily: '"Kulim Park", sans-serif'
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          padding: "16px",
+          backgroundColor: "#2563eb",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          fontSize: "16px",
+          fontWeight: "600",
+          cursor: "pointer",
+          transition: "all 0.2s ease",
+          boxShadow: "0 2px 4px rgba(37, 99, 235, 0.2)",
+          width: "100%",
+          justifyContent: "center",
+          fontFamily: '"Kulim Park", sans-serif',
         }}
         onMouseEnter={(e) => {
-          e.target.style.backgroundColor = '#1d4ed8';
-          e.target.style.transform = 'translateY(-1px)';
-          e.target.style.boxShadow = '0 4px 8px rgba(37, 99, 235, 0.3)';
+          e.target.style.backgroundColor = "#1d4ed8";
+          e.target.style.transform = "translateY(-1px)";
+          e.target.style.boxShadow = "0 4px 8px rgba(37, 99, 235, 0.3)";
         }}
         onMouseLeave={(e) => {
-          e.target.style.backgroundColor = '#2563eb';
-          e.target.style.transform = 'translateY(0)';
-          e.target.style.boxShadow = '0 2px 4px rgba(37, 99, 235, 0.2)';
+          e.target.style.backgroundColor = "#2563eb";
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = "0 2px 4px rgba(37, 99, 235, 0.2)";
         }}
       >
         重新檢測
