@@ -622,7 +622,7 @@ export default function Popup() {
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    style={{ overflow: "hidden", marginBottom: "16px" }}
+                    style={{ overflow: "visible", marginBottom: "16px" }}
                   >
                     <div
                       className="dropdown-container"
@@ -631,14 +631,16 @@ export default function Popup() {
                         borderRadius: "8px",
                         border: "1px solid #e5e7eb",
                         overflow: "visible",
-                        marginBottom: "16px",
+                        marginBottom: "20px",
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr 1fr",
                       }}
                     >
                       {/* 銀行選擇 */}
                       <div
                         style={{
                           position: "relative",
-                          borderBottom: "1px solid #e5e7eb",
+                          borderRight: "1px solid #e5e7eb",
                         }}
                       >
                         <motion.button
@@ -648,7 +650,7 @@ export default function Popup() {
                           whileTap={{ scale: 0.99 }}
                           style={{
                             width: "100%",
-                            padding: "12px 16px",
+                            padding: "12px 8px",
                             border: "none",
                             backgroundColor: "transparent",
                             textAlign: "left",
@@ -656,13 +658,13 @@ export default function Popup() {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            fontSize: "14px",
+                            fontSize: "12px",
                             fontFamily: '"Kulim Park", sans-serif',
                           }}
                         >
                           <span
                             style={{
-                              color: searchParams.bank ? "#111827" : "#9ca3af",
+                              color: searchParams.bank ? "#111827" : "#6b7280",
                             }}
                           >
                             {searchParams.bank || "選擇銀行"}
@@ -694,7 +696,7 @@ export default function Popup() {
                                 borderTop: "none",
                                 borderRadius: "0 0 6px 6px",
                                 boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                                zIndex: 10,
+                                zIndex: 1000,
                                 maxHeight: "360px",
                                 overflowY: "auto",
                               }}
@@ -711,9 +713,9 @@ export default function Popup() {
                                     handleSearchChange("bank", bank.name)
                                   }
                                   style={{
-                                    padding: "12px 16px",
+                                    padding: "8px 12px",
                                     cursor: "pointer",
-                                    fontSize: "14px",
+                                    fontSize: "12px",
                                     fontFamily: '"Kulim Park", sans-serif',
                                     borderBottom:
                                       index < banks.length - 1
@@ -733,7 +735,7 @@ export default function Popup() {
                       <div
                         style={{
                           position: "relative",
-                          borderBottom: "1px solid #e5e7eb",
+                          borderRight: "1px solid #e5e7eb",
                         }}
                       >
                         <motion.button
@@ -743,7 +745,7 @@ export default function Popup() {
                           whileTap={{ scale: 0.99 }}
                           style={{
                             width: "100%",
-                            padding: "12px 16px",
+                            padding: "12px 8px",
                             border: "none",
                             backgroundColor: "transparent",
                             textAlign: "left",
@@ -751,7 +753,7 @@ export default function Popup() {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            fontSize: "14px",
+                            fontSize: "12px",
                             fontFamily: '"Kulim Park", sans-serif',
                           }}
                         >
@@ -797,42 +799,36 @@ export default function Popup() {
                                 borderTop: "none",
                                 borderRadius: "0 0 6px 6px",
                                 boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                                zIndex: 10,
+                                zIndex: 1000,
                                 maxHeight: "360px",
                                 overflowY: "auto",
                               }}
                             >
-                              {categories
-                                .slice(0, 10)
-                                .map((category, index) => (
-                                  <motion.div
-                                    key={category[0]}
-                                    custom={index}
-                                    variants={optionVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    whileHover={{ backgroundColor: "#f3f4f6" }}
-                                    onClick={() =>
-                                      handleSearchChange(
-                                        "category",
-                                        category[1]
-                                      )
-                                    }
-                                    style={{
-                                      padding: "12px 16px",
-                                      cursor: "pointer",
-                                      fontSize: "14px",
-                                      fontFamily: '"Kulim Park", sans-serif',
-                                      borderBottom:
-                                        index <
-                                        Math.min(categories.length, 10) - 1
-                                          ? "1px solid #e5e7eb"
-                                          : "none",
-                                    }}
-                                  >
-                                    {category[1]}
-                                  </motion.div>
-                                ))}
+                              {categories.map((category, index) => (
+                                <motion.div
+                                  key={category[0]}
+                                  custom={index}
+                                  variants={optionVariants}
+                                  initial="hidden"
+                                  animate="visible"
+                                  whileHover={{ backgroundColor: "#f3f4f6" }}
+                                  onClick={() =>
+                                    handleSearchChange("category", category[1])
+                                  }
+                                  style={{
+                                    padding: "8px 12px",
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                    fontFamily: '"Kulim Park", sans-serif',
+                                    borderBottom:
+                                      index < categories.length - 1
+                                        ? "1px solid #e5e7eb"
+                                        : "none",
+                                  }}
+                                >
+                                  {category[1]}
+                                </motion.div>
+                              ))}
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -847,7 +843,7 @@ export default function Popup() {
                           whileTap={{ scale: 0.99 }}
                           style={{
                             width: "100%",
-                            padding: "12px 16px",
+                            padding: "12px 8px",
                             border: "none",
                             backgroundColor: "transparent",
                             textAlign: "left",
@@ -855,7 +851,7 @@ export default function Popup() {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            fontSize: "14px",
+                            fontSize: "12px",
                             fontFamily: '"Kulim Park", sans-serif',
                           }}
                         >
@@ -868,7 +864,7 @@ export default function Popup() {
                               ? scopes.find(
                                   (s) => s.name === searchParams.scope
                                 )?.name || searchParams.scope
-                              : "選擇店家範圍"}
+                              : "選擇店家"}
                           </span>
                           <motion.span
                             animate={{ rotate: showDropdowns.scope ? 180 : 0 }}
@@ -897,12 +893,12 @@ export default function Popup() {
                                 borderTop: "none",
                                 borderRadius: "0 0 6px 6px",
                                 boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                                zIndex: 10,
+                                zIndex: 1000,
                                 maxHeight: "360px",
                                 overflowY: "auto",
                               }}
                             >
-                              {scopes.slice(0, 10).map((scope, index) => (
+                              {scopes.map((scope, index) => (
                                 <motion.div
                                   key={scope.name}
                                   custom={index}
@@ -914,12 +910,12 @@ export default function Popup() {
                                     handleSearchChange("scope", scope.name)
                                   }
                                   style={{
-                                    padding: "12px 16px",
+                                    padding: "8px 12px",
                                     cursor: "pointer",
-                                    fontSize: "14px",
+                                    fontSize: "12px",
                                     fontFamily: '"Kulim Park", sans-serif',
                                     borderBottom:
-                                      index < Math.min(scopes.length, 10) - 1
+                                      index < scopes.length - 1
                                         ? "1px solid #e5e7eb"
                                         : "none",
                                   }}
@@ -957,6 +953,23 @@ export default function Popup() {
                         清空搜尋條件
                       </button>
                     )}
+
+                    {/* 卡片數量顯示 */}
+                    {
+                      <div
+                        style={{
+                          textAlign: "center",
+                          fontSize: "12px",
+                          color:
+                            displayCards.length === 0 ? "#ef4444" : "#6b7280",
+                          marginBottom: "16px",
+                          padding: "8px",
+                          fontFamily: '"Kulim Park", sans-serif',
+                        }}
+                      >
+                        找到 {displayCards.length} 張信用卡
+                      </div>
+                    }
                   </motion.div>
                 )}
               </AnimatePresence>
