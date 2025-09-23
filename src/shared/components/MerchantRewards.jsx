@@ -45,9 +45,7 @@ function MerchantRewards() {
         // 獲取用戶卡片
         await getUserCards(storage.authToken, storage.userID);
       }
-    } catch (error) {
-      console.error("檢查用戶登入狀態失敗:", error);
-    }
+    } catch (error) {}
   };
 
   // 獲取用戶卡片
@@ -66,9 +64,7 @@ function MerchantRewards() {
         const cards = await response.json();
         setUserCards(cards);
       }
-    } catch (error) {
-      console.error("獲取用戶卡片失敗:", error);
-    }
+    } catch (error) {}
   };
 
   // 檢查是否為用戶持有的卡片
@@ -112,7 +108,6 @@ function MerchantRewards() {
       const cards = await getRewards(finalMerchant);
       setRewards(cards);
     } catch (error) {
-      console.error("載入商家回饋失敗:", error);
       setMerchant("未知商家");
       setRewards([]);
     } finally {

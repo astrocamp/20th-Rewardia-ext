@@ -1,5 +1,3 @@
-console.log("Rewardia Background Script 已載入");
-
 // 整合組員的後端邏輯
 const base_url = "https://rewardia.net";
 const token_url = `${base_url}/users/api/get_token`;
@@ -44,13 +42,11 @@ async function get_user_cards(token, id) {
       },
     });
     if (!response.ok) {
-      console.error(`抓使用者卡片出現錯誤: ${response.status}`);
       return [];
     }
     const cards = await response.json();
     return cards;
   } catch (error) {
-    console.error(`抓使用者卡片出現錯誤: ${error}`);
     return [];
   }
 }
@@ -86,10 +82,7 @@ async function get_userID() {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("Background 收到訊息:", message);
-
   if (message.type === "FROM_CONTENT_SCRIPT") {
-    console.log("來自 Content Script 的訊息:", message.data);
     sendResponse({ success: true });
     return true;
   }
@@ -142,13 +135,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     tab.url &&
     tab.url.includes("rewardia.net")
   ) {
-    console.log(
-      "🎯 [Background] 偵測到 rewardia.net 頁面載入，嘗試自動取得 token"
-    );
     await fetch_token(token_url);
   }
-});
-
-chrome.action.onClicked.addListener((tab) => {
-  console.log("套件圖示被點擊:", tab);
 });

@@ -63,9 +63,7 @@ export default function Popup() {
         // 獲取用戶卡片
         await getUserCards(storage.authToken, storage.userID);
       }
-    } catch (error) {
-      console.error("檢查用戶登入狀態失敗:", error);
-    }
+    } catch (error) {}
   };
 
   // 獲取用戶卡片
@@ -84,9 +82,7 @@ export default function Popup() {
         const cards = await response.json();
         setUserCards(cards);
       }
-    } catch (error) {
-      console.error("獲取用戶卡片失敗:", error);
-    }
+    } catch (error) {}
   };
 
   // 檢查是否為用戶持有的卡片
@@ -111,8 +107,6 @@ export default function Popup() {
         // 初始化顯示隨機卡片
         resetToGridView(data.all_cards_data || []);
       }
-    } catch (error) {
-      console.error("載入資料失敗:", error);
     } finally {
       setLoading(false);
     }
