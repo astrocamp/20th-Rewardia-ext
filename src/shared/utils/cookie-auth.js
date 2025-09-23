@@ -5,18 +5,18 @@
  * 常見的認證 cookie 名稱
  */
 const AUTH_COOKIE_NAMES = [
-    'sessionid',     // Django 預設
-    'csrftoken',     // Django CSRF
-    'auth_token',
-    'user_id',
-    'jwt',
-    'access_token',
-    'refresh_token',
-    'sid',
-    'PHPSESSID',
-    'JSESSIONID',
-    'session',
-    '_session'
+  "sessionid", // Django 預設
+  "csrftoken", // Django CSRF
+  "auth_token",
+  "user_id",
+  "jwt",
+  "access_token",
+  "refresh_token",
+  "sid",
+  "PHPSESSID",
+  "JSESSIONID",
+  "session",
+  "_session",
 ];
 
 /**
@@ -25,12 +25,12 @@ const AUTH_COOKIE_NAMES = [
  * @returns {string|null} cookie 值
  */
 export const getCookie = (name) => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) {
-        return parts.pop().split(';').shift();
-    }
-    return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop().split(";").shift();
+  }
+  return null;
 };
 
 /**
@@ -38,13 +38,13 @@ export const getCookie = (name) => {
  * @returns {Object} cookie 物件
  */
 export const parseAllCookies = () => {
-    return document.cookie.split(';').reduce((acc, cookie) => {
-        const [name, value] = cookie.trim().split('=');
-        if (name && value) {
-            acc[name] = value;
-        }
-        return acc;
-    }, {});
+  return document.cookie.split(";").reduce((acc, cookie) => {
+    const [name, value] = cookie.trim().split("=");
+    if (name && value) {
+      acc[name] = value;
+    }
+    return acc;
+  }, {});
 };
 
 /**
@@ -52,25 +52,23 @@ export const parseAllCookies = () => {
  * @returns {Object} 認證狀態資訊
  */
 export const checkAuthCookies = () => {
-    const allCookies = parseAllCookies();
-    const authCookies = {};
-    let hasAuthCookie = false;
+  const allCookies = parseAllCookies();
+  const authCookies = {};
+  let hasAuthCookie = false;
 
-    AUTH_COOKIE_NAMES.forEach(name => {
-        if (allCookies[name]) {
-            authCookies[name] = allCookies[name];
-            hasAuthCookie = true;
-        }
-    });
+  AUTH_COOKIE_NAMES.forEach((name) => {
+    if (allCookies[name]) {
+      authCookies[name] = allCookies[name];
+      hasAuthCookie = true;
+    }
+  });
 
-    console.log('🍪 [CookieAuth] 檢查認證 cookies:', authCookies);
-
-    return {
-        isLoggedIn: hasAuthCookie,
-        authCookies: authCookies,
-        allCookies: allCookies,
-        timestamp: Date.now()
-    };
+  return {
+    isLoggedIn: hasAuthCookie,
+    authCookies: authCookies,
+    allCookies: allCookies,
+    timestamp: Date.now(),
+  };
 };
 
 /**
@@ -79,45 +77,38 @@ export const checkAuthCookies = () => {
  * @returns {Function} 停止監聽的函數
  */
 export const onCookieChange = (callback) => {
-    console.log('👂 [CookieAuth] 開始監聽 cookie 變化');
+  let lastCookieString = document.cookie;
+  let lastAuthStatus = checkAuthCookies();
 
-    let lastCookieString = document.cookie;
-    let lastAuthStatus = checkAuthCookies();
+  const checkChanges = () => {
+    const currentCookieString = document.cookie;
 
-    const checkChanges = () => {
-        const currentCookieString = document.cookie;
+    if (currentCookieString !== lastCookieString) {
+      const currentAuthStatus = checkAuthCookies();
 
-        if (currentCookieString !== lastCookieString) {
-            console.log('🔄 [CookieAuth] Cookie 變化偵測到');
+      // 檢查認證狀態是否變化
+      if (currentAuthStatus.isLoggedIn !== lastAuthStatus.isLoggedIn) {
+        callback({
+          isLoggedIn: currentAuthStatus.isLoggedIn,
+          source: "cookie_change_detection",
+          previous: lastAuthStatus,
+          current: currentAuthStatus,
+          timestamp: Date.now(),
+        });
+      }
 
-            const currentAuthStatus = checkAuthCookies();
+      lastCookieString = currentCookieString;
+      lastAuthStatus = currentAuthStatus;
+    }
+  };
 
-            // 檢查認證狀態是否變化
-            if (currentAuthStatus.isLoggedIn !== lastAuthStatus.isLoggedIn) {
-                console.log(`🔐 [CookieAuth] 認證狀態變更: ${lastAuthStatus.isLoggedIn} -> ${currentAuthStatus.isLoggedIn}`);
+  // 每秒檢查一次
+  const interval = setInterval(checkChanges, 1000);
 
-                callback({
-                    isLoggedIn: currentAuthStatus.isLoggedIn,
-                    source: 'cookie_change_detection',
-                    previous: lastAuthStatus,
-                    current: currentAuthStatus,
-                    timestamp: Date.now()
-                });
-            }
-
-            lastCookieString = currentCookieString;
-            lastAuthStatus = currentAuthStatus;
-        }
-    };
-
-    // 每秒檢查一次
-    const interval = setInterval(checkChanges, 1000);
-
-    // 返回停止監聽的函數
-    return () => {
-        clearInterval(interval);
-        console.log('🛑 [CookieAuth] 停止監聽 cookie 變化');
-    };
+  // 返回停止監聽的函數
+  return () => {
+    clearInterval(interval);
+  };
 };
 
 /**
@@ -125,28 +116,20 @@ export const onCookieChange = (callback) => {
  * @returns {Promise<Object>} 登入狀態
  */
 export const quickLoginCheck = async () => {
-    console.log('⚡ [CookieAuth] 快速登入檢查（基於 cookie）');
+  const cookieAuth = checkAuthCookies();
 
-    const cookieAuth = checkAuthCookies();
+  // 同時檢查 localStorage 的 token
+  const hasLocalToken = localStorage.getItem("authToken");
 
-    // 同時檢查 localStorage 的 token
-    const hasLocalToken = localStorage.getItem('authToken');
+  const isLoggedIn = cookieAuth.isLoggedIn || !!hasLocalToken;
 
-    const isLoggedIn = cookieAuth.isLoggedIn || !!hasLocalToken;
-
-    console.log('📊 [CookieAuth] 快速檢查結果:', {
-        cookieAuth: cookieAuth.isLoggedIn,
-        localStorage: !!hasLocalToken,
-        finalResult: isLoggedIn
-    });
-
-    return {
-        isLoggedIn: isLoggedIn,
-        source: 'quick_cookie_check',
-        cookieAuth: cookieAuth,
-        hasLocalToken: !!hasLocalToken,
-        timestamp: Date.now()
-    };
+  return {
+    isLoggedIn: isLoggedIn,
+    source: "quick_cookie_check",
+    cookieAuth: cookieAuth,
+    hasLocalToken: !!hasLocalToken,
+    timestamp: Date.now(),
+  };
 };
 
 /**
@@ -156,48 +139,40 @@ export const quickLoginCheck = async () => {
  * @returns {Promise<Object>} 登入狀態
  */
 export const smartLoginCheck = async (apiCheckFunction) => {
-    console.log('🧠 [CookieAuth] 智能登入檢查');
+  // 1. 先做快速 cookie 檢查
+  const quickResult = await quickLoginCheck();
 
-    // 1. 先做快速 cookie 檢查
-    const quickResult = await quickLoginCheck();
+  // 2. 如果 cookie 顯示未登入，直接返回
+  if (!quickResult.isLoggedIn) {
+    return {
+      isLoggedIn: false,
+      source: "smart_check_cookie_negative",
+      quickResult: quickResult,
+    };
+  }
 
-    // 2. 如果 cookie 顯示未登入，直接返回
-    if (!quickResult.isLoggedIn) {
-        console.log('❌ [CookieAuth] Cookie 檢查顯示未登入，跳過 API 檢查');
-        return {
-            isLoggedIn: false,
-            source: 'smart_check_cookie_negative',
-            quickResult: quickResult
-        };
-    }
+  // 3. 如果 cookie 顯示已登入，用 API 確認
 
-    // 3. 如果 cookie 顯示已登入，用 API 確認
-    console.log('✅ [CookieAuth] Cookie 檢查顯示已登入，進行 API 確認');
+  try {
+    const apiResult = await Promise.race([
+      apiCheckFunction(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("API 檢查超時")), 5000)
+      ),
+    ]);
 
-    try {
-        const apiResult = await Promise.race([
-            apiCheckFunction(),
-            new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('API 檢查超時')), 5000)
-            )
-        ]);
-
-        console.log('🌐 [CookieAuth] API 檢查完成:', apiResult);
-
-        return {
-            ...apiResult,
-            source: 'smart_check_api_confirmed',
-            quickResult: quickResult
-        };
-    } catch (error) {
-        console.warn('⚠️ [CookieAuth] API 檢查失敗，回退到 cookie 結果:', error);
-
-        // API 失敗時，回退到 cookie 結果
-        return {
-            isLoggedIn: quickResult.isLoggedIn,
-            source: 'smart_check_api_fallback',
-            quickResult: quickResult,
-            apiError: error.message
-        };
-    }
+    return {
+      ...apiResult,
+      source: "smart_check_api_confirmed",
+      quickResult: quickResult,
+    };
+  } catch (error) {
+    // API 失敗時，回退到 cookie 結果
+    return {
+      isLoggedIn: quickResult.isLoggedIn,
+      source: "smart_check_api_fallback",
+      quickResult: quickResult,
+      apiError: error.message,
+    };
+  }
 };
