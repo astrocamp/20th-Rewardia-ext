@@ -171,6 +171,14 @@
   align-items: center;
 }
 
+.card_selector span:last-child {
+  color: white;
+  padding-top: 5px;
+  font-size: 10px;
+  font-family: '"Kulim Park", sans-serif';
+  font-style: italic;
+}
+
 /* 浮動圖示樣式 */
 .rewardia_floating_icon {
   position: fixed;
