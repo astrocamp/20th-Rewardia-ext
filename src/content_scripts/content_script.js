@@ -248,7 +248,7 @@ function display_cards(cards, merchant_name) {
   card_selector.className = "card_selector";
   card_selector.innerHTML = `<img src="${chrome.runtime.getURL(
     "icons/icon16.png"
-  )}"><span class="card_selector_title">使用者信用卡（點選即可填入卡號）</span>：<ul class="card_list"></ul>`;
+  )}"><span class="card_selector_title">使用者信用卡（點選即可填入卡號）</span>：<ul class="card_list"></ul><span>實際回饋資訊以信用卡活動網站為主。</span>`;
   credit_card_box.insertAdjacentElement("beforeend", card_selector);
 
   // 卡片選項
