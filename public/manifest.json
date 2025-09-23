@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Rewardia",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Rewardia Chrome Extension",
   "action": {
     "default_popup": "/src/popup/popup.html",
@@ -9,7 +9,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.eslite.com/*","*://www.klook.com/*","*://24h.pchome.com.tw/*","*://www.momoshop.com.tw/*","*://cart.momoshop.com.tw/*", "https://rewardia.net/*","http://localhost:8000/*"],
+      "matches": ["*://www.eslite.com/*","*://www.klook.com/*","*://24h.pchome.com.tw/*","*://www.momoshop.com.tw/*","*://cart.momoshop.com.tw/*", "https://www.kkday.com/*","https://www.shopback.com.tw/*","https://rewardia.net/*","http://localhost:8000/*"],
       "js": ["content.js"],
       "css": ["content_script.css"]
     }

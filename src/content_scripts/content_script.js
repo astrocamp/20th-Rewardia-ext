@@ -10,6 +10,7 @@ const merchantMap = {
   foodpanda: "foodpanda",
   kkday: "KKday",
   klook: "Klook",
+  shopee: "Shopee",
 };
 
 let merchant = Object.keys(merchantMap).find((key) => {
