@@ -42,6 +42,7 @@ async function show_rewardia_popup() {
 
   close_btn.addEventListener("click", function () {
     popup.remove();
+    show_floating_icon();
     sessionStorage.setItem("close_popup", "true");
   });
 
@@ -51,12 +52,40 @@ async function show_rewardia_popup() {
       action: "open_extension",
     });
     popup.remove();
+    show_floating_icon();
   });
 
   setTimeout(() => {
     popup.remove();
+    show_floating_icon();
     sessionStorage.setItem("close_popup", "true");
   }, 5000);
+}
+
+function show_floating_icon() {
+  // 檢查是否已經有浮動圖示存在
+  if (document.querySelector(".rewardia_floating_icon")) {
+    return;
+  }
+
+  const floating_icon = document.createElement("div");
+  floating_icon.className = "rewardia_floating_icon";
+  floating_icon.innerHTML = `<img src="${chrome.runtime.getURL(
+    "icons/icon128.png"
+  )}" alt="Rewardia">`;
+  document.body.appendChild(floating_icon);
+
+  // 點擊浮動圖示開啟擴充功能
+  floating_icon.addEventListener("click", function () {
+    chrome.runtime.sendMessage({
+      action: "open_extension",
+    });
+  });
+
+  // 添加移除浮動圖示的功能（雙擊移除）
+  floating_icon.addEventListener("dblclick", function () {
+    floating_icon.remove();
+  });
 }
 
 if (current_url == `${base_url}/users/member/`) {

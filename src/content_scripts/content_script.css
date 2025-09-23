@@ -170,3 +170,80 @@
   justify-content: space-between;
   align-items: center;
 }
+
+/* 浮動圖示樣式 */
+.rewardia_floating_icon {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #032885 0%, #13b8ff 100%);
+  border-radius: 20%;
+  box-shadow: 0 4px 16px rgba(3, 40, 133, 0.3);
+  z-index: 999999;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+
+  /* 初始動畫 */
+  transform: scale(0);
+  animation: bounceIn 0.6s ease-out forwards;
+}
+
+.rewardia_floating_icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(3, 40, 133, 0.4);
+  background: linear-gradient(135deg, #24458d 0%, #74aed6 100%);
+}
+
+.rewardia_floating_icon img {
+  width: 30px;
+  height: 30px;
+}
+
+/* 浮動圖示動畫 */
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 浮動效果 */
+.rewardia_floating_icon {
+  animation: bounceIn 0.6s ease-out forwards, float 3s ease-in-out infinite 0.6s,
+    pulse 2s ease-in-out infinite 0.6s;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 4px 16px rgba(3, 40, 133, 0.3),
+      0 0 0 0 rgba(19, 184, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(3, 40, 133, 0.3),
+      0 0 0 10px rgba(19, 184, 255, 0);
+  }
+}
