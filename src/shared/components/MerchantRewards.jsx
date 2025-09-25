@@ -81,7 +81,7 @@ function MerchantRewards() {
 
   // get_rewards 函數
   async function getRewards(merchant) {
-    const url = `https://rewardia.net/api/rewards/scope/${merchant}`;
+    const url = `https://rewardia.net/api/rewards/scope/${merchant}/`;
     const response = await fetch(url);
     const data = await response.json();
     return data;

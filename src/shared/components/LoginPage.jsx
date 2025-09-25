@@ -174,13 +174,16 @@ function LoginPage() {
 
   const fetchTokenFromAPI = async () => {
     try {
-      const response = await fetch("https://rewardia.net/users/api/get_token", {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        "https://rewardia.net/users/api/get_token/",
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -305,7 +308,7 @@ function LoginPage() {
     try {
       setFormLoading(true);
       const response = await fetch(
-        `https://rewardia.net/api/users/new_card/${selectedCardId}`,
+        `https://rewardia.net/api/users/new_card/${selectedCardId}/`,
         {
           method: "POST",
           headers: {

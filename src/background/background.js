@@ -1,6 +1,6 @@
 // 整合組員的後端邏輯
 const base_url = "https://rewardia.net";
-const token_url = `${base_url}/users/api/get_token`;
+const token_url = `${base_url}/users/api/get_token/`;
 
 const merchantMap = {
   momo: "momo購物",
@@ -14,7 +14,7 @@ async function get_current_url() {
 }
 
 async function get_rewards(merchant) {
-  const url = `${base_url}/api/rewards/scope/${merchant}`;
+  const url = `${base_url}/api/rewards/scope/${merchant}/`;
   const response = await fetch(url);
   const data = await response.json();
   return data;
