@@ -164,15 +164,19 @@ function LoginPage() {
         const cards = await response.json();
 
         return cards;
-      } else {
-        // 如果抓不到卡，則登出
+      }
+      if (response.status === 401) {
+        // 如果授權有問題，則登出
         await chrome.storage.local.remove(["authToken", "username", "userID"]);
         setUser(null);
+        showToast("登入已過期，請重新登入", "warning");
+        return [];
+      } else {
+        showToast("載入卡片失敗", "error");
         return [];
       }
     } catch (error) {
-      await chrome.storage.local.remove(["authToken", "username", "userID"]);
-      setUser(null);
+      showToast("網路錯誤，請稍後再試", "error");
       return [];
     }
   };
