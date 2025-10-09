@@ -165,9 +165,14 @@ function LoginPage() {
 
         return cards;
       } else {
+        // 如果抓不到卡，則登出
+        await chrome.storage.local.remove(["authToken", "username", "userID"]);
+        setUser(null);
         return [];
       }
     } catch (error) {
+      await chrome.storage.local.remove(["authToken", "username", "userID"]);
+      setUser(null);
       return [];
     }
   };
