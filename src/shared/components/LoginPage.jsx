@@ -166,10 +166,10 @@ function LoginPage() {
         return cards;
       }
       if (response.status === 401) {
-        // 如果授權有問題，則登出
+        // 如果授權有問題，則提醒重新載入，重新載入就會重新fetch token
         await chrome.storage.local.remove(["authToken", "username", "userID"]);
         setUser(null);
-        showToast("登入已過期，請重新登入", "warning");
+        showToast("登入已過期，請重新載入", "warning");
         return [];
       } else {
         showToast("載入卡片失敗", "error");
