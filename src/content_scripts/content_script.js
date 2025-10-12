@@ -124,16 +124,12 @@ async function display_momo_rewards(price, rate, card, is_user_card) {
 }
 
 if (current_url.includes("cart") && current_url.includes(merchant)) {
-  const checkout_price = document.querySelector(
-    ".checkout-content-price.final-price"
-  );
+  const checkout_price = document.querySelector("#orderListBox");
   if (checkout_price) {
     let last_price = 0;
 
     function check_price() {
-      const price = extract_price_from_element(
-        ".checkout-content-price.final-price"
-      );
+      const price = extract_price_from_element(".checkout-content-price");
 
       if (price !== last_price) {
         last_price = price;
